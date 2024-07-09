@@ -18,6 +18,10 @@ Functions:
 
 # %% ---- 2024-07-08 ------------------------
 # Requirements and constants
+from rich import print
+
+from util import logger
+from util.joint import mw, ms
 
 
 # %% ---- 2024-07-08 ------------------------
@@ -26,6 +30,15 @@ Functions:
 
 # %% ---- 2024-07-08 ------------------------
 # Play ground
+if __name__ == "__main__":
+    mw.window.show()
+
+    print(mw.children)
+
+    # Execute and exit the UI
+    app = mw.app
+    app.exec_()
+    app.exit()
 
 
 # %% ---- 2024-07-08 ------------------------

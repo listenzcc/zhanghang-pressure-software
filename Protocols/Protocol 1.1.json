@@ -1,0 +1,10 @@
+{
+  "name": "调试专用-2",
+  "maker": "Debug",
+  "_buffer": [
+    ["Real", 10],
+    ["Fake", 10],
+    ["Real", 10],
+    ["Fake", 10]
+  ]
+}
