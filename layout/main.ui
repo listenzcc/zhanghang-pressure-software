@@ -93,7 +93,7 @@
       <item>
        <widget class="QTabWidget" name="tabWidget">
         <property name="currentIndex">
-         <number>0</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -547,7 +547,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>191</width>
+            <width>202</width>
             <height>541</height>
            </rect>
           </property>
@@ -562,7 +562,7 @@
            <item>
             <widget class="QLabel" name="label_10">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -575,7 +575,7 @@
            <item>
             <widget class="QComboBox" name="zcc_comboBox_modeSelection">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -592,25 +592,18 @@
            <item>
             <widget class="QLabel" name="label_11">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
              <property name="text">
-              <string>坐标范围设置</string>
+              <string>坐标范围设置（克/g）</string>
              </property>
             </widget>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_7">
-             <item>
-              <widget class="QLabel" name="label_27">
-               <property name="text">
-                <string>（克/g）</string>
-               </property>
-              </widget>
-             </item>
              <item>
               <widget class="QDoubleSpinBox" name="zcc_doubleSpinBox_yMin">
                <property name="sizePolicy">
@@ -619,11 +612,8 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
-               <property name="minimum">
-                <double>-1000.000000000000000</double>
-               </property>
                <property name="maximum">
-                <double>1000.000000000000000</double>
+                <double>2000.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -648,11 +638,11 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
-               <property name="minimum">
-                <double>-1000.000000000000000</double>
-               </property>
                <property name="maximum">
-                <double>1000.000000000000000</double>
+                <double>2000.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>800.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -667,6 +657,12 @@
            </item>
            <item>
             <widget class="QLabel" name="label_18">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
               <string>实时反馈线设置</string>
              </property>
@@ -674,6 +670,15 @@
            </item>
            <item>
             <widget class="QCheckBox" name="zcc_checkBox_flagDisplayReferenceCurve_2">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
              <property name="text">
               <string>是/否显示实时反馈线</string>
              </property>
@@ -683,16 +688,35 @@
             <layout class="QHBoxLayout" name="horizontalLayout_20">
              <item>
               <widget class="QLabel" name="label_38">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>线宽</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QSpinBox" name="zcc_spinBox_feedbackCurveWidth"/>
+              <widget class="QSpinBox" name="zcc_spinBox_feedbackCurveWidth">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QLabel" name="label_39">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>颜色</string>
                </property>
@@ -710,7 +734,7 @@
                 <string notr="true">background-color: black;</string>
                </property>
                <property name="text">
-                <string>    </string>
+                <string/>
                </property>
                <property name="default">
                 <bool>false</bool>
@@ -728,6 +752,12 @@
            </item>
            <item>
             <widget class="QLabel" name="label_13">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
               <string>参考线设置</string>
              </property>
@@ -735,6 +765,12 @@
            </item>
            <item>
             <widget class="QCheckBox" name="zcc_checkBox_flagDisplayReferenceCurve">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
               <string>是/否显示参考线</string>
              </property>
@@ -744,6 +780,12 @@
             <layout class="QHBoxLayout" name="horizontalLayout_13">
              <item>
               <widget class="QLabel" name="label_26">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>参考值（克/g）</string>
                </property>
@@ -752,7 +794,7 @@
              <item>
               <widget class="QDoubleSpinBox" name="zcc_doubleSpinBox_yReference">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -771,16 +813,35 @@
             <layout class="QHBoxLayout" name="horizontalLayout_12">
              <item>
               <widget class="QLabel" name="label_23">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>线宽</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QSpinBox" name="zcc_spinBox_referenceCurveWidth"/>
+              <widget class="QSpinBox" name="zcc_spinBox_referenceCurveWidth">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QLabel" name="label_24">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>颜色</string>
                </property>
@@ -798,7 +859,7 @@
                 <string notr="true">background-color: black;</string>
                </property>
                <property name="text">
-                <string>    </string>
+                <string/>
                </property>
                <property name="default">
                 <bool>false</bool>
@@ -816,6 +877,12 @@
            </item>
            <item>
             <widget class="QLabel" name="label_25">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
               <string>延迟设置</string>
              </property>
@@ -823,6 +890,12 @@
            </item>
            <item>
             <widget class="QCheckBox" name="zcc_checkBox_flagDisplayDelayedCurve">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
               <string>是/否显示延迟线</string>
              </property>
@@ -886,16 +959,35 @@
             <layout class="QHBoxLayout" name="horizontalLayout_16">
              <item>
               <widget class="QLabel" name="label_30">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>线宽</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QSpinBox" name="zcc_spinBox_delayedCurveWidth"/>
+              <widget class="QSpinBox" name="zcc_spinBox_delayedCurveWidth">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QLabel" name="label_31">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>颜色</string>
                </property>
@@ -913,7 +1005,7 @@
                 <string notr="true">background-color: black;</string>
                </property>
                <property name="text">
-                <string>    </string>
+                <string/>
                </property>
                <property name="checkable">
                 <bool>false</bool>
@@ -931,6 +1023,12 @@
            </item>
            <item>
             <widget class="QLabel" name="label_36">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
               <string>动画参数</string>
              </property>
@@ -1066,8 +1164,11 @@
           <property name="smallDecimalPoint">
            <bool>false</bool>
           </property>
+          <property name="digitCount">
+           <number>8</number>
+          </property>
           <property name="segmentStyle">
-           <enum>QLCDNumber::Flat</enum>
+           <enum>QLCDNumber::Outline</enum>
           </property>
           <property name="value" stdset="0">
            <double>200.000000000000000</double>
@@ -1092,8 +1193,11 @@
           <property name="frameShadow">
            <enum>QFrame::Sunken</enum>
           </property>
+          <property name="digitCount">
+           <number>8</number>
+          </property>
           <property name="segmentStyle">
-           <enum>QLCDNumber::Flat</enum>
+           <enum>QLCDNumber::Outline</enum>
           </property>
          </widget>
         </item>
@@ -1318,7 +1422,7 @@
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QGraphicsView" name="zcc_graphicsView_monitor">
+    <widget class="QWidget" name="horizontalLayoutWidget_2">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -1327,6 +1431,7 @@
        <height>711</height>
       </rect>
      </property>
+     <layout class="QHBoxLayout" name="zcc_horizontalLayout_mainScreen"/>
     </widget>
    </widget>
   </widget>

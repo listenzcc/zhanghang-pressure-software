@@ -23,13 +23,15 @@ from pathlib import Path
 from PySide2 import QtWidgets
 
 from .qt.load_ui import MainWindow
-from .qt.screen import MainScreen
+from .qt.welcome_screen import WelcomeScreen
+from .qt.curve_screen import CurveScreen
 
 from .options import rop
 from . import logger
 
 mw = MainWindow()
-ms = MainScreen()
+# cur_screen = CurveScreen()
+
 
 # %% ---- 2024-07-09 ------------------------
 # Function and class
@@ -93,7 +95,7 @@ def _update_experimentDesign(dct: dict, p: Path = None):
     except Exception:
         def _aOrB(ab):
             a, b = ab
-            return a if a else b
+            return a or b
 
         posix = 'Cached'
         short_posix = 'Cached'
@@ -122,7 +124,7 @@ def _update_experimentDesign(dct: dict, p: Path = None):
         f'# Name:         {dct["name"]}',
         f'# Maker:        {dct["maker"]}',
         f'# Total length: {total_length} seconds',
-        f'# Blocks as following:'
+        '# Blocks as following:',
     ]
 
     lines.extend(block_lines)
@@ -214,11 +216,36 @@ def _handle_start_pushButton():
     Handle the pushButton for start block design experiment
     '''
     pushButton_name = 'zcc_pushButton_start'
+    pushButton_name_stop = 'zcc_pushButton_stop'
 
     def _start_experiment():
         design = rop.design
         # TODO: Start the design experiment as the design requires
         logger.debug(f'Starting experiment: {design}')
+
+        # Make a new timer
+        timer = mw.stop_timer_and_get_timer()
+
+        # Design
+        design = rop.design
+        print(design)
+
+        # Put the curve screen
+        cur_screen = CurveScreen(
+            design,
+            mw.children['zcc_lcdNumber_yValue'],
+            mw.children['zcc_lcdNumber_passedLength'],
+        )
+        cur_screen.start()
+        timer.timeout.connect(cur_screen.draw)
+        timer.start()
+        mw.change_main_screen(cur_screen)
+
+        # Disable this and release stop pushButton
+        mw.children[pushButton_name].setDisabled(True)
+        mw.children[pushButton_name_stop].setDisabled(False)
+
+        logger.debug(f'Started experiment: {design}')
 
     mw.children[pushButton_name].clicked.connect(_start_experiment)
 
@@ -228,12 +255,32 @@ def _handle_stop_pushButton():
     Handle the pushButton for stop block design experiment
     '''
     pushButton_name = 'zcc_pushButton_stop'
+    pushButton_name_start = 'zcc_pushButton_start'
 
     def _stop_experiment():
         # TODO: Stop the running block design experiment
-        logger.debug('Stop experiment')
+        logger.debug('Stopping experiment')
+
+        # Make a new timer
+        timer = mw.stop_timer_and_get_timer()
+
+        # Put the welcome screen
+        wel_screen = WelcomeScreen()
+        wel_screen.start()
+        timer.timeout.connect(wel_screen.draw)
+        timer.start()
+        mw.change_main_screen(wel_screen)
+
+        # Disable this and release start pushButton
+        mw.children[pushButton_name].setDisabled(True)
+        mw.children[pushButton_name_start].setDisabled(False)
+
+        logger.debug('Stopped experiment')
 
     mw.children[pushButton_name].clicked.connect(_stop_experiment)
+
+    # Disable this on the start
+    mw.children[pushButton_name].setDisabled(True)
 
 
 def _handle_toggleFullScreen_pushButton():
@@ -248,6 +295,20 @@ def _handle_toggleFullScreen_pushButton():
 
     mw.children[pushButton_name].clicked.connect(_toggle_fullScreen_display)
 
+
+def _place_mainScreen_to_hBox():
+    '''
+    Place the main screen to its place
+    '''
+    timer = mw.stop_timer_and_get_timer()
+    wel_screen = WelcomeScreen()
+    wel_screen.start()
+    timer.timeout.connect(wel_screen.draw)
+    timer.start()
+    mw.change_main_screen(wel_screen)
+
+
+_place_mainScreen_to_hBox()
 
 # Handling experiment design buttons
 _handle_loading_existing_design()
@@ -271,7 +332,7 @@ _bind_number(mw.children['zcc_doubleSpinBox_yReference'], 'yReference')
 _bind_number(
     mw.children['zcc_spinBox_feedbackCurveWidth'], 'feedbackCurveWidth')
 _bind_number(
-    mw.children['zcc_spinBox_referenceCurveWidth'], 'feedbackCurveWidth')
+    mw.children['zcc_spinBox_referenceCurveWidth'], 'referenceCurveWidth')
 _bind_number(
     mw.children['zcc_spinBox_delayedCurveWidth'], 'delayedCurveWidth')
 _bind_number(

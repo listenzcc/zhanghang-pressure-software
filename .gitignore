@@ -1,1 +1,7 @@
 log
+
+# Building stuff
+*.spec
+build
+dist
+*.iso

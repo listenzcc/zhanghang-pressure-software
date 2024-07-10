@@ -44,37 +44,46 @@ class RunningOptions(object, metaclass=Singleton):
     known_components_prefix = 'zcc_'
 
     # Pressure options
-    yMin = 0
-    yMax = 400
-    yReference = 200
+    yMin = 0  # g
+    yMax = 800  # g
+    yReference = 400  # g
 
     # Display options
-    feedbackCurveWidth = 2
+    feedbackCurveWidth = 2  # pixels
     feedbackCurveColor = '#0000a0'
 
-    referenceCurveWidth = 2
+    referenceCurveWidth = 2  # pixels
     referenceCurveColor = '#00a000'
     flagDisplayReferenceCurve = True
 
-    delayedCurveWidth = 2
+    delayedCurveWidth = 2  # pixels
     delayedCurveColor = '#a00000'
-    delayedLength = 5
-    updateStepLength = 5
+    delayedLength = 5  # seconds
+    updateStepLength = 5  # seconds
 
     flagDisplayDelayedCurve = True
 
     # Animation thresholds
-    thresholdOfMean = 20
-    thresholdOfStd = 10
+    thresholdOfMean = 20  # g
+    thresholdOfStd = 10  # g
 
     # Block design
-    blockLength = 10
+    blockLength = 10  # seconds
     design = {"name": "N.A.", "maker": "N.A.", "_buffer": []}
 
     # Metrics settings
     metricThreshold1 = 30
     metricThreshold2 = 60
     metricThreshold3 = 90
+
+    # Device settings
+    idealSamplingRate = 125  # Hz
+    productString = 'HIDtoUART example'
+
+    # Corrections settings
+    g0 = int(open(project_root.joinpath('correction/g0')).read())
+    g200 = int(open(project_root.joinpath('correction/g200')).read())
+    offsetG0 = int(open(project_root.joinpath('correction/offset_g0')).read())
 
 
 # ! It is designed to be the singleton object,

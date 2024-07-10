@@ -52,10 +52,47 @@ class MainWindow(object):
     # The found components
     children = None
 
+    # Make a timer
+    timer = None
+
+    # Current main screen widget
+    main_screen_container = None
+    main_screen_widget = None
+
     def __init__(self):
         self._search_children()
         self._assign_children()
         self._set_window_title()
+        # ! Not quit a elegant solution since the name is arbitrary
+        self.main_screen_container = self.children['zcc_horizontalLayout_mainScreen']
+
+    def change_main_screen(self, widget):
+        # Remove exiting widget
+        if self.main_screen_widget:
+            try:
+                self.main_screen_widget.stop()
+            except Exception as err:
+                logger.error(f'Unable to stop screen: {err} | {widget}')
+            self.main_screen_container.removeWidget(self.main_screen_widget)
+            logger.debug(
+                f'Removed existing widget: {self.main_screen_container}')
+
+        # Put a new one
+        self.main_screen_widget = widget
+        self.main_screen_container.addWidget(widget)
+        logger.debug(f'Put {widget} to {self.main_screen_container}')
+
+    def stop_timer_and_get_timer(self):
+        '''
+        Stop existing timer and return a new one, which is not started
+        '''
+        # If exists, stop it
+        if self.timer:
+            self.timer.stop()
+            logger.debug(f'Stopped current timer')
+        # Create a new timer and return
+        self.timer = QtCore.QTimer()
+        return self.timer
 
     def _set_window_title(self, title: str = None):
         '''
@@ -65,6 +102,7 @@ class MainWindow(object):
             self.window_title = title
         self.window.setWindowTitle(self.window_title)
         logger.debug(f'Set window title: {self.window_title}')
+        return
 
     def _search_children(self):
         """
@@ -82,8 +120,8 @@ class MainWindow(object):
             e.objectName(): e for e in raw
             if e.objectName().startswith(self.known_component_prefix)
         }
-        logger.debug(f'Found children: {children}')
         self.children = children
+        logger.debug(f'Found children: {children}')
         return children
 
     def _assign_children(self):
@@ -98,8 +136,8 @@ class MainWindow(object):
                     f'Unknown attribute (UI has it, but window does not.): {attr}')
 
             self.__setattr__(attr, v)
-
             logger.debug(f'Assigned child: {attr} = {v}')
+        return
 
     def show(self):
         """
@@ -110,6 +148,7 @@ class MainWindow(object):
         """
 
         self.window.show()
+        return
 
 # %% ---- 2024-07-09 ------------------------
 # Play ground
