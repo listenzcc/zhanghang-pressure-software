@@ -1,11 +1,11 @@
 """
-File: curve_screen.py
+File: holding_ball_screen.py
 Author: Chuncheng Zhang
-Date: 2024-07-10
+Date: 2024-07-11
 Copyright & Email: chuncheng.zhang@ia.ac.cn
 
 Purpose:
-    Screen for the curve feedback
+    Screen for the holding ball feedback
 
 Functions:
     1. Requirements and constants
@@ -16,11 +16,12 @@ Functions:
 """
 
 
-# %% ---- 2024-07-10 ------------------------
+# %% ---- 2024-07-11 ------------------------
 # Requirements and constants
 import numpy as np
 import pyqtgraph as pg
 
+from PySide2 import QtWidgets
 from PySide2.QtGui import QFont
 
 from .base_experiment_screen import BaseExperimentScreen
@@ -29,16 +30,13 @@ from ..options import rop
 from .. import logger
 
 
-# %% ---- 2024-07-10 ------------------------
+# %% ---- 2024-07-11 ------------------------
 # Function and class
-class CurveScreen(BaseExperimentScreen):
-    '''
-    Curve feedback screen
-    '''
-    # Curves and pens
-    delayed_curve = None
-    feedback_curve = None
-    reference_curve = None
+class HoldingBallScreen(BaseExperimentScreen):
+    # Ellipse and pens
+    delayed_ellipse = QtWidgets.QGraphicsEllipseItem(-1, -1, 2, 2)
+    feedback_ellipse = QtWidgets.QGraphicsEllipseItem(-1, -1, 2, 2)
+    reference_ellipse = QtWidgets.QGraphicsEllipseItem(-1, -1, 2, 2)
 
     delayed_pen = pg.mkPen(color='red')
     feedback_pen = pg.mkPen(color='blue')
@@ -54,10 +52,14 @@ class CurveScreen(BaseExperimentScreen):
         logger.debug('Initialized')
 
     def put_components(self):
-        # Put curves
-        self.delayed_curve = self.plot([], [], pen=self.delayed_pen)
-        self.feedback_curve = self.plot([], [], pen=self.feedback_pen)
-        self.reference_curve = self.plot([], [], pen=self.reference_pen)
+        # Add the ellipse
+        self.delayed_ellipse.setPen(self.delayed_pen)
+        self.feedback_ellipse.setPen(self.feedback_pen)
+        self.reference_ellipse.setPen(self.reference_pen)
+
+        self.addItem(self.delayed_ellipse)
+        self.addItem(self.feedback_ellipse)
+        self.addItem(self.reference_ellipse)
 
         # Disable autorange
         self.disableAutoRange()
@@ -91,6 +93,18 @@ class CurveScreen(BaseExperimentScreen):
         logger.debug(f'Finished: {self.design}')
 
     def on_size_changed(self):
+        # Change range dynamically
+        width = self.width()
+        height = self.height()
+        r = width / height
+        if width > height:
+            self.setYRange(-2, 2)
+            self.setXRange(-2*r, 2*r)
+        else:
+            self.setXRange(-2, 2)
+            self.setYRange(-2/r, 2*r)
+        logger.debug(f'Changed range with width {width}, height {height}')
+
         # Put marker and make it unmoving
         font = QFont()
         font.setPixelSize(40)
@@ -103,6 +117,32 @@ class CurveScreen(BaseExperimentScreen):
         )
         self.marker_text_item.setParentItem(self.marker_legend)
         return
+
+    def compute_ellipse_coordinates(self, ref, v):
+        '''
+        Convert y to ellipse coordinates
+
+            - v == ref: 1
+            - v > ref: 1 -> 0, exp(-d)
+            - v < ref: 1 -> +infinity, 2-exp(-d)
+        '''
+
+        # self.update_range()
+
+        # Compute normalized different between y and ref
+        d = np.abs((v-ref) / ref)
+        # Convert into coordinates
+        if v > ref:
+            k = np.exp(-d)
+        else:
+            k = 2 - np.exp(-d)
+
+        x = -k
+        y = -k
+        w = 2 * k
+        h = 2 * k
+
+        return x, y, w, h
 
     def draw(self):
         self.frames += 1
@@ -118,11 +158,12 @@ class CurveScreen(BaseExperimentScreen):
         if len(data) == 0:
             return
 
+        ref = rop.yReference
+
         # Set data
         real_y = data[:, 0]
         fake_y = data[:, 2]
         times = data[:, 4]
-        ref_y = np.zeros(times.shape) + rop.yReference
 
         # Current time
         passed = times[-1]
@@ -141,11 +182,13 @@ class CurveScreen(BaseExperimentScreen):
         if mark == 'E':
             self.on_blocks_finished()
 
+        # Compute coordinates and set rect
         if mark == 'F':
-            self.feedback_curve.setData(times, self._limit(fake_y))
+            a, b, c, d = self.compute_ellipse_coordinates(ref, fake_y[-1])
+            self.feedback_ellipse.setRect(a, b, c, d)
         else:
-            self.feedback_curve.setData(times, self._limit(real_y))
-        self.reference_curve.setData(times, self._limit(ref_y))
+            a, b, c, d = self.compute_ellipse_coordinates(ref, real_y[-1])
+            self.feedback_ellipse.setRect(a, b, c, d)
 
         # Get delayed_data
         delayed_data = self.HID_reader.peek_by_seconds(
@@ -157,21 +200,26 @@ class CurveScreen(BaseExperimentScreen):
             real_d_y = delayed_data[:, 0]
             fake_d_y = delayed_data[:, 1]
             d_times = delayed_data[:, 4]
+            # Compute coordinates and set rect
             if mark == 'F':
-                self.delayed_curve.setData(d_times, self._limit(fake_d_y))
+                a, b, c, d = self.compute_ellipse_coordinates(
+                    ref, fake_d_y[-1])
+                self.delayed_ellipse.setRect(a, b, c, d)
             else:
-                self.delayed_curve.setData(d_times, self._limit(real_d_y))
+                a, b, c, d = self.compute_ellipse_coordinates(
+                    ref, real_d_y[-1])
+                self.delayed_ellipse.setRect(a, b, c, d)
 
         # Update the visible for the curves
         if mark == '+':
             # Set the visible for the curves by force
-            self.delayed_curve.setVisible(False)
-            self.feedback_curve.setVisible(False)
+            self.delayed_ellipse.setVisible(False)
+            self.feedback_ellipse.setVisible(False)
         else:
             # Set the visible for the curves according to options
-            self.delayed_curve.setVisible(rop.flagDisplayDelayedCurve)
-            self.feedback_curve.setVisible(rop.flagDisplayFeedbackCurve)
-        self.reference_curve.setVisible(rop.flagDisplayReferenceCurve)
+            self.delayed_ellipse.setVisible(rop.flagDisplayDelayedCurve)
+            self.feedback_ellipse.setVisible(rop.flagDisplayFeedbackCurve)
+        self.reference_ellipse.setVisible(rop.flagDisplayReferenceCurve)
 
         # Set Pen
         self.reference_pen.setColor(rop.referenceCurveColor)
@@ -181,27 +229,20 @@ class CurveScreen(BaseExperimentScreen):
         self.delayed_pen.setColor(rop.delayedCurveColor)
         self.delayed_pen.setWidth(rop.delayedCurveWidth)
 
-        # Set range
-        self.setYRange(rop.yMin, rop.yMax)
-        # Keep the current data point on the horizontal center
-        self.setXRange(times[0], 2*times[-1] - times[0])
-
         # Set LED
         self.lcd_y.display(f'{real_y[-1]:0.2f}')
         self.lcd_t.display(f'{times[-1]:0.2f}')
 
         # Set progress bar
         self.progress_bar.setValue(100*(1-remain_ratio))
-        return
 
-
-# %% ---- 2024-07-10 ------------------------
+# %% ---- 2024-07-11 ------------------------
 # Play ground
 
 
-# %% ---- 2024-07-10 ------------------------
+# %% ---- 2024-07-11 ------------------------
 # Pending
 
 
-# %% ---- 2024-07-10 ------------------------
+# %% ---- 2024-07-11 ------------------------
 # Pending

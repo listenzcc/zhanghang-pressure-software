@@ -33,8 +33,8 @@ from .. import logger
 # %% ---- 2024-07-09 ------------------------
 # Function and class
 class PerformanceRuler(object):
-    width = 200
-    height = 200
+    width = 160
+    height = 90
     radius = int(np.min([width, height]) / 20)
     n_types = 4
     running = False
@@ -82,7 +82,8 @@ class PerformanceRuler(object):
         '''
         # ! Will not start the self._update running if it is running.
         if (len(self.threads) > 0):
-            logger.error(f'Can not start update since it is not stopped yet')
+            logger.error(
+                'Can not start update since it had not been stopped yet')
             return
         t = Thread(target=self._update, daemon=True)
         t.start()
@@ -135,8 +136,10 @@ class PerformanceRuler(object):
             score = np.mean(happiness)
             passed = time.time() - tic
             fps = frame_count / passed
-            print(
-                f'fps: {fps:0.2f}, score: {score:0.4f}, moving: {len(m)}, passed: {passed:0.2f}')
+
+            if frame_count % 100 == 0:
+                print(
+                    f'fps: {fps:0.2f}, score: {score:0.4f}, moving: {len(m)}, passed: {passed:0.2f}')
 
             # Find willing to moving if their happiness are low,
             # and move them.

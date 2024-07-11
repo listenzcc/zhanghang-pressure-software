@@ -20,26 +20,68 @@ Functions:
 # Requirements and constants
 import json
 from pathlib import Path
-from PySide2 import QtWidgets
+from PySide2 import QtCore, QtWidgets
 
 from .qt.load_ui import MainWindow
+
 from .qt.welcome_screen import WelcomeScreen
 from .qt.curve_screen import CurveScreen
+from .qt.holding_ball_screen import HoldingBallScreen
 
+from .feedback_mode_enum import FeedbackModeEnum, get_feedback_mode_info
 from .options import rop
 from . import logger
 
 mw = MainWindow()
-# cur_screen = CurveScreen()
 
 
 # %% ---- 2024-07-09 ------------------------
 # Function and class
 
+def _load_feedback_modes():
+    '''
+    Load the feedback modes to the comboBox
+    '''
+    box_name = 'zcc_comboBox_modeSelection'
+    box = mw.children[box_name]
+
+    for e in FeedbackModeEnum:
+        s = get_feedback_mode_info(e)
+        box.addItem(s, userData=e)
+        logger.debug(f'Loaded feedback mode {s}')
+
+    def update_feedback_model():
+        # Set the option with the userRole(userData)
+        rop.feedback_model = box.currentData()
+        logger.debug(f'Set feedbackMode to {e}')
+
+    box.currentIndexChanged.connect(update_feedback_model)
+
+    # Initialize with the current value
+    update_feedback_model()
+
+    return
+
+
+def _bind_toggle(widget: QtWidgets.QCheckBox, attr_name: str):
+    '''
+    Bind the checkBox widget to the option
+    '''
+    # Set the widget value to the rop option
+    widget.setChecked(rop.__getattribute__(attr_name))
+
+    # The rop option follows the widget changing
+    def _handle_change(value):
+        rop.__setattr__(attr_name, value)
+        logger.debug(f'Set {attr_name} to {value}')
+
+    widget.stateChanged.connect(_handle_change)
+    logger.debug(f'Linked {attr_name} with {widget}')
+
 
 def _bind_number(widget: QtWidgets.QAbstractSpinBox, attr_name: str):
     '''
-    Bind the number widgets to the options
+    Bind the number spin widget to the option
     '''
     # Set the widget value to the rop option
     widget.setValue(rop.__getattribute__(attr_name))
@@ -47,9 +89,10 @@ def _bind_number(widget: QtWidgets.QAbstractSpinBox, attr_name: str):
     # The rop option follows the widget changing
     def _handle_change(value):
         rop.__setattr__(attr_name, value)
+        logger.debug(f'Set {attr_name} to {value}')
 
     widget.valueChanged.connect(_handle_change)
-    logger.debug(f'Handled {attr_name} with {widget}')
+    logger.debug(f'linked {attr_name} with {widget}')
 
 
 def _bind_color(widget: QtWidgets.QPushButton, attr_name: str):
@@ -211,54 +254,86 @@ def _handle_block_design_pushButtons():
         _save_block_design)
 
 
+def _go_back_to_welcome_screen():
+    '''
+    Go back to welcome screen, it is designed to be executed on the stop for experiment processing
+    '''
+    pushButton_name_start = 'zcc_pushButton_start'
+    pushButton_name_stop = 'zcc_pushButton_stop'
+
+    # Make a new timer
+    timer = mw.stop_timer_and_get_timer()
+
+    # Put the welcome screen
+    wel_screen = WelcomeScreen()
+    wel_screen.start()
+    timer.timeout.connect(wel_screen.draw)
+    timer.start()
+    mw.change_main_screen(wel_screen)
+
+    # Disable this and release start pushButton
+    mw.children[pushButton_name_start].setDisabled(True)
+    mw.children[pushButton_name_stop].setDisabled(False)
+
+    logger.debug('Went back to welcome screen')
+    return
+
+
 def _handle_start_pushButton():
     '''
     Handle the pushButton for start block design experiment
     '''
-    pushButton_name = 'zcc_pushButton_start'
+    pushButton_name_start = 'zcc_pushButton_start'
     pushButton_name_stop = 'zcc_pushButton_stop'
 
     def _start_experiment():
+        # Choose a screen object
+        if rop.feedback_model == FeedbackModeEnum.curveFeedback:
+            Screen = CurveScreen
+        elif rop.feedback_model == FeedbackModeEnum.holdingBallFeedback:
+            Screen = HoldingBallScreen
+        else:
+            Screen = None
+            logger.error(f'Invalid feedback mode: {rop.feedback_model}')
+            return
+
+        # Get block design
         design = rop.design
-        # TODO: Start the design experiment as the design requires
         logger.debug(f'Starting experiment: {design}')
 
         # Make a new timer
         timer = mw.stop_timer_and_get_timer()
 
-        # Design
-        design = rop.design
-        print(design)
-
-        # Put the curve screen
-        cur_screen = CurveScreen(
-            design,
-            mw.children['zcc_lcdNumber_yValue'],
-            mw.children['zcc_lcdNumber_passedLength'],
+        # Put the screen
+        screen = Screen(
+            design=design,
+            lcd_y=mw.children['zcc_lcdNumber_yValue'],
+            lcd_t=mw.children['zcc_lcdNumber_passedLength'],
+            progress_bar=mw.children['zcc_progressBar_experimentProgress'],
+            on_stop=_go_back_to_welcome_screen
         )
-        cur_screen.start()
-        timer.timeout.connect(cur_screen.draw)
+        screen.start()
+        timer.timeout.connect(screen.draw)
         timer.start()
-        mw.change_main_screen(cur_screen)
+        mw.change_main_screen(screen)
 
         # Disable this and release stop pushButton
-        mw.children[pushButton_name].setDisabled(True)
+        mw.children[pushButton_name_start].setDisabled(True)
         mw.children[pushButton_name_stop].setDisabled(False)
 
         logger.debug(f'Started experiment: {design}')
 
-    mw.children[pushButton_name].clicked.connect(_start_experiment)
+    mw.children[pushButton_name_start].clicked.connect(_start_experiment)
 
 
 def _handle_stop_pushButton():
     '''
     Handle the pushButton for stop block design experiment
     '''
-    pushButton_name = 'zcc_pushButton_stop'
+    pushButton_name_stop = 'zcc_pushButton_stop'
     pushButton_name_start = 'zcc_pushButton_start'
 
     def _stop_experiment():
-        # TODO: Stop the running block design experiment
         logger.debug('Stopping experiment')
 
         # Make a new timer
@@ -272,15 +347,15 @@ def _handle_stop_pushButton():
         mw.change_main_screen(wel_screen)
 
         # Disable this and release start pushButton
-        mw.children[pushButton_name].setDisabled(True)
+        mw.children[pushButton_name_stop].setDisabled(True)
         mw.children[pushButton_name_start].setDisabled(False)
 
         logger.debug('Stopped experiment')
 
-    mw.children[pushButton_name].clicked.connect(_stop_experiment)
+    mw.children[pushButton_name_stop].clicked.connect(_stop_experiment)
 
     # Disable this on the start
-    mw.children[pushButton_name].setDisabled(True)
+    mw.children[pushButton_name_stop].setDisabled(True)
 
 
 def _handle_toggleFullScreen_pushButton():
@@ -296,7 +371,7 @@ def _handle_toggleFullScreen_pushButton():
     mw.children[pushButton_name].clicked.connect(_toggle_fullScreen_display)
 
 
-def _place_mainScreen_to_hBox():
+def _place_welcomeScreen_to_hBox():
     '''
     Place the main screen to its place
     '''
@@ -308,8 +383,14 @@ def _place_mainScreen_to_hBox():
     mw.change_main_screen(wel_screen)
 
 
-_place_mainScreen_to_hBox()
+# %% ---- 2024-07-09 ------------------------
+# Play ground
 
+# Place welcomeScreen for startup
+_place_welcomeScreen_to_hBox()
+
+# ----------------------------------------
+# ---- Bind functions ----
 # Handling experiment design buttons
 _handle_loading_existing_design()
 _handle_block_design_pushButtons()
@@ -319,9 +400,9 @@ _handle_start_pushButton()
 _handle_stop_pushButton()
 _handle_toggleFullScreen_pushButton()
 
-# %% ---- 2024-07-09 ------------------------
-# Play ground
-
+# ----------------------------------------
+# ---- Put feedback modes ----
+_load_feedback_modes()
 
 # ----------------------------------------
 # ---- Bind numbers ----
@@ -354,9 +435,9 @@ _bind_number(
 _bind_number(
     mw.children['zcc_doubleSpinBox_metricThreshold3'], 'metricThreshold3')
 
+
 # ----------------------------------------
 # ---- Bind colors ----
-
 _bind_color(
     mw.children['zcc_pushButton_feedbackCurveColor'], 'feedbackCurveColor')
 _bind_color(
@@ -364,9 +445,81 @@ _bind_color(
 _bind_color(
     mw.children['zcc_pushButton_delayedCurveColor'], 'delayedCurveColor')
 
+
+# ----------------------------------------
+# ---- Bind toggles ----
+_bind_toggle(
+    mw.children['zcc_checkBox_flagDisplayFeedbackCurve'], 'flagDisplayFeedbackCurve')
+_bind_toggle(
+    mw.children['zcc_checkBox_flagDisplayReferenceCurve'], 'flagDisplayReferenceCurve')
+_bind_toggle(
+    mw.children['zcc_checkBox_flagDisplayDelayedCurve'], 'flagDisplayDelayedCurve')
+
 # %% ---- 2024-07-09 ------------------------
 # Pending
 
 
 # %% ---- 2024-07-09 ------------------------
 # Pending
+# Handle keypress
+# F11 key code is 16777274
+known_key_code = {
+    16777274: 'F11',
+    83: 's'
+}
+
+
+class KeyPressFilter(QtCore.QObject):
+    def eventFilter(self, widget, event):
+        # If is a KeyPress event, do something
+        if event.type() == QtCore.QEvent.KeyPress:
+            key_code = event.key()
+            text = event.text()
+            if event.modifiers():
+                text = event.keyCombination().key().name.decode(encoding="utf-8")
+            logger.debug(f'Key pressed: {key_code}, {text}, {event}')
+
+            if known_key_code.get(key_code) == 'F11':
+                logger.debug('Got F11 pressed')
+                toggle_full_screen_display()
+
+        # if not a KeyPress event return False
+        else:
+            return False
+
+
+# Add event handler
+eventFilter = KeyPressFilter(parent=mw.window)
+# Install the event filter
+mw.window.installEventFilter(eventFilter)
+
+
+def toggle_full_screen_display():
+    print('*******************************')
+    if QtCore.Qt.WindowFullScreen & mw.window.windowState():
+        # from showFullScreen to showNormal
+        mw.window.showNormal()
+        mw.children['zcc_leftFrame'].setVisible(True)
+        mw.children['zcc_bottomFrame'].setVisible(True)
+
+        # Restore where the stuff were located.
+        mw.middle_frame.setGeometry(mw.middle_frame_geometry)
+        mw.main_screen_container.setGeometry(mw.main_screen_container_geometry)
+
+        logger.debug('Entered show normal state')
+    else:
+        # from showNormal to showFullScreen
+        mw.window.showFullScreen()
+        mw.children['zcc_leftFrame'].setVisible(False)
+        mw.children['zcc_bottomFrame'].setVisible(False)
+
+        # Remember where the stuff are located.
+        mw.main_screen_container_geometry = mw.main_screen_container.geometry()
+        mw.middle_frame_geometry = mw.middle_frame.geometry()
+
+        # Full screen them
+        win_geometry = mw.window.geometry()
+        mw.middle_frame.setGeometry(win_geometry)
+        mw.main_screen_container.setGeometry(win_geometry)
+
+        logger.debug('Entered show full screen state')

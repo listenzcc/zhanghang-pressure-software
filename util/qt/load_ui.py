@@ -56,31 +56,49 @@ class MainWindow(object):
     timer = None
 
     # Current main screen widget
+    middle_frame = None
+    middle_frame_geometry = None
     main_screen_container = None
+    main_screen_container_geometry = None
     main_screen_widget = None
 
     def __init__(self):
         self._search_children()
         self._assign_children()
         self._set_window_title()
-        # ! Not quit a elegant solution since the name is arbitrary
-        self.main_screen_container = self.children['zcc_horizontalLayout_mainScreen']
 
-    def change_main_screen(self, widget):
-        # Remove exiting widget
+        # ! I know it is not quit a elegant solution since the name is here
+        self.middle_frame = self.children['zcc_middleFrame']
+        layout = QtWidgets.QHBoxLayout(self.window)
+        self.middle_frame.setLayout(layout)
+        self.main_screen_container = layout
+        # self.main_screen_container = self.children['zcc_horizontalLayout_mainScreen']
+
+    def toggle_full_screen_display(self):
+        if QtCore.Qt.WindowFullScreen & self.windowState():
+            # is showFullScreen
+            self.showNormal()
+            logger.debug('Entered show normal state')
+        else:
+            # is not showFullScreen
+            self.showFullScreen()
+            logger.debug('Entered show full screen state')
+
+    def change_main_screen(self, pg_widget):
+        # Remove the exiting main screen widget with the new one
         if self.main_screen_widget:
             try:
                 self.main_screen_widget.stop()
             except Exception as err:
-                logger.error(f'Unable to stop screen: {err} | {widget}')
+                logger.error(f'Unable to stop screen: {err} | {pg_widget}')
             self.main_screen_container.removeWidget(self.main_screen_widget)
             logger.debug(
                 f'Removed existing widget: {self.main_screen_container}')
 
         # Put a new one
-        self.main_screen_widget = widget
-        self.main_screen_container.addWidget(widget)
-        logger.debug(f'Put {widget} to {self.main_screen_container}')
+        self.main_screen_widget = pg_widget
+        self.main_screen_container.addWidget(pg_widget)
+        logger.debug(f'Put {pg_widget} to {self.main_screen_container}')
 
     def stop_timer_and_get_timer(self):
         '''
@@ -129,12 +147,16 @@ class MainWindow(object):
         Link the widgets and their names
         '''
         for k, v in self.children.items():
+            # Get the attribute name by removing the known component prefix
             attr = k[len(self.known_component_prefix):]
 
-            if not hasattr(self, attr):
+            # Warning if the subclass does not have the attribute
+            # ! Disabling it since the project does not require the subclass to do so
+            if False and not hasattr(self, attr):
                 logger.warning(
                     f'Unknown attribute (UI has it, but window does not.): {attr}')
 
+            # Bind the attribute to the widget
             self.__setattr__(attr, v)
             logger.debug(f'Assigned child: {attr} = {v}')
         return
@@ -142,9 +164,6 @@ class MainWindow(object):
     def show(self):
         """
         Shows the window object.
-
-        Returns:
-            None
         """
 
         self.window.show()

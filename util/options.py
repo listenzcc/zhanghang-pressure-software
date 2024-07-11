@@ -18,6 +18,7 @@ Functions:
 
 # %% ---- 2024-07-09 ------------------------
 # Requirements and constants
+from .feedback_mode_enum import FeedbackModeEnum
 from . import project_name, software_version, project_root
 
 
@@ -51,6 +52,7 @@ class RunningOptions(object, metaclass=Singleton):
     # Display options
     feedbackCurveWidth = 2  # pixels
     feedbackCurveColor = '#0000a0'
+    flagDisplayFeedbackCurve = True
 
     referenceCurveWidth = 2  # pixels
     referenceCurveColor = '#00a000'
@@ -62,6 +64,9 @@ class RunningOptions(object, metaclass=Singleton):
     updateStepLength = 5  # seconds
 
     flagDisplayDelayedCurve = True
+
+    # Feedback model
+    feedback_model: FeedbackModeEnum = None
 
     # Animation thresholds
     thresholdOfMean = 20  # g
@@ -78,6 +83,7 @@ class RunningOptions(object, metaclass=Singleton):
 
     # Device settings
     idealSamplingRate = 125  # Hz
+    # ! Device name, ask the product if the device changes
     productString = 'HIDtoUART example'
 
     # Corrections settings
