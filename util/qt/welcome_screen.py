@@ -61,8 +61,13 @@ class WelcomeScreen(pg.GraphicsLayoutWidget):
     plot10 = None
     plot11 = None
 
+    # Screen name
+    name = 'Welcome screen'
+
     def __init__(self):
         super().__init__()
+        # self.image_item = pg.ImageItem()
+        # self.text_item = pg.TextItem(color=(0, 0, 0))
         self._put_components()
         logger.info('Initialized')
 

@@ -44,6 +44,14 @@ class RunningOptions(object, metaclass=Singleton):
     ui_path = project_root.joinpath('layout/main.ui')
     known_components_prefix = 'zcc_'
 
+    # Subject info
+    subjectName = '被试姓名'
+    subjectAge = -1
+    subjectGender = '不详'
+    # datetime fmt: '%Y-%m-%d-%H-%M-%S'
+    subjectExperimentDateTime = '1984-01-01-12-34-56'
+    subjectRem = '其他信息'
+
     # Pressure options
     yMin = 0  # g
     yMax = 800  # g

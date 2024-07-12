@@ -20,13 +20,21 @@ Functions:
 # Requirements and constants
 import json
 from pathlib import Path
+from datetime import datetime
 from PySide2 import QtCore, QtWidgets
 
-from .qt.load_ui import MainWindow
+from .qt.load_ui import MainWindow, app
 
-from .qt.welcome_screen import WelcomeScreen
 from .qt.curve_screen import CurveScreen
+from .qt.replay_screen import ReplayScreen
+from .qt.welcome_screen import WelcomeScreen
 from .qt.holding_ball_screen import HoldingBallScreen
+from .qt.building_animation_screen import BuildingAnimationScreen
+from .qt.two_steps_score_animation_screen import TwoStepsScoreAnimationScreen
+
+from .animation.two_steps_score_animation import TwoStepScore_Animation_CatClimbsTree
+from .animation.two_steps_score_animation import TwoStepScore_Animation_CatLeavesSubmarine
+from .animation.score_animation import BuildingScoreAnimation
 
 from .feedback_mode_enum import FeedbackModeEnum, get_feedback_mode_info
 from .options import rop
@@ -34,9 +42,13 @@ from . import logger
 
 mw = MainWindow()
 
+bsa = BuildingScoreAnimation()
+tssa_cct = TwoStepScore_Animation_CatClimbsTree()
+tssa_cls = TwoStepScore_Animation_CatLeavesSubmarine()
 
 # %% ---- 2024-07-09 ------------------------
 # Function and class
+
 
 def _load_feedback_modes():
     '''
@@ -279,82 +291,110 @@ def _go_back_to_welcome_screen():
     return
 
 
+def start_experiment():
+    # Get subject information
+    rop.subjectName = mw.children['zcc_lineEdit_subjectName'].text()
+    rop.subjectAge = mw.children['zcc_spinBox_subjectAge'].value()
+    rop.subjectRem = mw.children['zcc_plainTextEdit_subjectOthers'].toPlainText(
+    )
+    rop.subjectExperimentDateTime = datetime.strftime(
+        datetime.now(), '%Y-%m-%d-%H-%M-%S')
+    if mw.children['zcc_radioButton_subjectGenderMale'].isChecked():
+        rop.subjectGender = 'Male'
+    else:
+        rop.subjectGender = 'Female'
+    logger.debug(f'''Subject information:
+        {rop.subjectName},
+        {rop.subjectGender},
+        {rop.subjectAge},
+        {rop.subjectExperimentDateTime},
+        {rop.subjectRem}''')
+
+    # Choose a screen object
+    kwargs = {}
+    if rop.feedback_model == FeedbackModeEnum.curveFeedback:
+        Screen = CurveScreen
+    elif rop.feedback_model == FeedbackModeEnum.holdingBallFeedback:
+        Screen = HoldingBallScreen
+    elif rop.feedback_model == FeedbackModeEnum.catClimbTreeFeedback:
+        Screen = TwoStepsScoreAnimationScreen
+        kwargs['tssa'] = tssa_cct
+    elif rop.feedback_model == FeedbackModeEnum.catOutOceanFeedback:
+        Screen = TwoStepsScoreAnimationScreen
+        kwargs['tssa'] = tssa_cls
+    elif rop.feedback_model == FeedbackModeEnum.buildingUpFeedback:
+        Screen = BuildingAnimationScreen
+        kwargs['bsa'] = bsa
+    else:
+        Screen = None
+        logger.error(f'Invalid feedback mode: {rop.feedback_model}')
+        return
+
+    # Get block design
+    design = rop.design
+    logger.debug(f'Starting experiment: {design}')
+
+    # Make a new timer
+    timer = mw.stop_timer_and_get_timer()
+
+    # Put the screen
+    screen = Screen(
+        design=design,
+        lcd_y=mw.children['zcc_lcdNumber_yValue'],
+        lcd_t=mw.children['zcc_lcdNumber_passedLength'],
+        progress_bar=mw.children['zcc_progressBar_experimentProgress'],
+        on_stop=_go_back_to_welcome_screen,
+        **kwargs
+    )
+    screen.start()
+    timer.timeout.connect(screen.draw)
+    timer.start()
+    mw.change_main_screen(screen)
+
+    # Disable this and release stop pushButton
+    pushButton_name_start = 'zcc_pushButton_start'
+    pushButton_name_stop = 'zcc_pushButton_stop'
+    mw.children[pushButton_name_start].setDisabled(True)
+    mw.children[pushButton_name_stop].setDisabled(False)
+
+    logger.debug(f'Started experiment: {design}')
+    return
+
+
 def _handle_start_pushButton():
     '''
     Handle the pushButton for start block design experiment
     '''
+    # Connect
+    pushButton_name_start = 'zcc_pushButton_start'
+    mw.children[pushButton_name_start].clicked.connect(start_experiment)
+    return
+
+
+def stop_experiment():
+    logger.debug('Stopping experiment')
+
+    # Stop the current main_screen
+    mw.main_screen_widget.stop()
+
+    # Disable this and release start pushButton
     pushButton_name_start = 'zcc_pushButton_start'
     pushButton_name_stop = 'zcc_pushButton_stop'
+    mw.children[pushButton_name_stop].setDisabled(True)
+    mw.children[pushButton_name_start].setDisabled(False)
 
-    def _start_experiment():
-        # Choose a screen object
-        if rop.feedback_model == FeedbackModeEnum.curveFeedback:
-            Screen = CurveScreen
-        elif rop.feedback_model == FeedbackModeEnum.holdingBallFeedback:
-            Screen = HoldingBallScreen
-        else:
-            Screen = None
-            logger.error(f'Invalid feedback mode: {rop.feedback_model}')
-            return
-
-        # Get block design
-        design = rop.design
-        logger.debug(f'Starting experiment: {design}')
-
-        # Make a new timer
-        timer = mw.stop_timer_and_get_timer()
-
-        # Put the screen
-        screen = Screen(
-            design=design,
-            lcd_y=mw.children['zcc_lcdNumber_yValue'],
-            lcd_t=mw.children['zcc_lcdNumber_passedLength'],
-            progress_bar=mw.children['zcc_progressBar_experimentProgress'],
-            on_stop=_go_back_to_welcome_screen
-        )
-        screen.start()
-        timer.timeout.connect(screen.draw)
-        timer.start()
-        mw.change_main_screen(screen)
-
-        # Disable this and release stop pushButton
-        mw.children[pushButton_name_start].setDisabled(True)
-        mw.children[pushButton_name_stop].setDisabled(False)
-
-        logger.debug(f'Started experiment: {design}')
-
-    mw.children[pushButton_name_start].clicked.connect(_start_experiment)
+    logger.debug('Stopped experiment')
 
 
 def _handle_stop_pushButton():
     '''
     Handle the pushButton for stop block design experiment
     '''
+
+    # Connect
     pushButton_name_stop = 'zcc_pushButton_stop'
-    pushButton_name_start = 'zcc_pushButton_start'
-
-    def _stop_experiment():
-        logger.debug('Stopping experiment')
-
-        # Make a new timer
-        timer = mw.stop_timer_and_get_timer()
-
-        # Put the welcome screen
-        wel_screen = WelcomeScreen()
-        wel_screen.start()
-        timer.timeout.connect(wel_screen.draw)
-        timer.start()
-        mw.change_main_screen(wel_screen)
-
-        # Disable this and release start pushButton
-        mw.children[pushButton_name_stop].setDisabled(True)
-        mw.children[pushButton_name_start].setDisabled(False)
-
-        logger.debug('Stopped experiment')
-
-    mw.children[pushButton_name_stop].clicked.connect(_stop_experiment)
-
-    # Disable this on the start
+    mw.children[pushButton_name_stop].clicked.connect(stop_experiment)
+    # Disable this on the app start
     mw.children[pushButton_name_stop].setDisabled(True)
 
 
@@ -385,6 +425,7 @@ def _place_welcomeScreen_to_hBox():
 
 # %% ---- 2024-07-09 ------------------------
 # Play ground
+
 
 # Place welcomeScreen for startup
 _place_welcomeScreen_to_hBox()
@@ -465,27 +506,55 @@ _bind_toggle(
 # F11 key code is 16777274
 known_key_code = {
     16777274: 'F11',
+    16777216: 'Esc',
     83: 's'
 }
 
 
 class KeyPressFilter(QtCore.QObject):
     def eventFilter(self, widget, event):
-        # If is a KeyPress event, do something
-        if event.type() == QtCore.QEvent.KeyPress:
-            key_code = event.key()
-            text = event.text()
-            if event.modifiers():
-                text = event.keyCombination().key().name.decode(encoding="utf-8")
-            logger.debug(f'Key pressed: {key_code}, {text}, {event}')
-
-            if known_key_code.get(key_code) == 'F11':
-                logger.debug('Got F11 pressed')
-                toggle_full_screen_display()
-
-        # if not a KeyPress event return False
-        else:
+        # Return False if it is not a KeyPress
+        if event.type() != QtCore.QEvent.KeyPress:
             return False
+
+        # It is a KeyPress event, do something
+        key_code = event.key()
+        text = event.text()
+        if event.modifiers():
+            text = event.keyCombination().key().name.decode(encoding="utf-8")
+        logger.debug(f'Key pressed: {key_code}, {text}, {event}')
+
+        # F11 is pressed, toggle full screen display
+        if known_key_code.get(key_code) == 'F11':
+            logger.debug('Got F11 pressed')
+            toggle_full_screen_display()
+
+        # Esc is pressed, exit the application
+        if known_key_code.get(key_code) == 'Esc':
+            logger.debug('Got Esc pressed')
+            try:
+                stop_experiment()
+            finally:
+                app.exit()
+
+        # s is pressed, toggle start and stop experiment
+        if known_key_code.get(key_code) == 's':
+            logger.debug('Got s pressed')
+            try:
+                name = mw.main_screen_widget.name
+            except Exception:
+                name = 'no-named-screen'
+            finally:
+                if name == 'Experiment screen':
+                    logger.debug(
+                        'Stop experiment since the experiment screen is running.')
+                    stop_experiment()
+                else:
+                    logger.debug(
+                        f'Start experiment since the {name} is running.')
+                    start_experiment()
+
+        return True
 
 
 # Add event handler
@@ -495,7 +564,6 @@ mw.window.installEventFilter(eventFilter)
 
 
 def toggle_full_screen_display():
-    print('*******************************')
     if QtCore.Qt.WindowFullScreen & mw.window.windowState():
         # from showFullScreen to showNormal
         mw.window.showNormal()
@@ -523,3 +591,41 @@ def toggle_full_screen_display():
         mw.main_screen_container.setGeometry(win_geometry)
 
         logger.debug('Entered show full screen state')
+
+# %%
+
+
+def _handle_playback_button():
+    # Read the existing data
+    file, _ = QtWidgets.QFileDialog().getOpenFileName(
+        caption='Read protocol',
+        dir=rop.project_root.joinpath('Data/Data').as_posix(),
+        filter="Json files (*.json)")
+
+    # Go on only when the file is not empty
+    if not file:
+        logger.warning('Not selecting any file')
+        return
+
+    path = Path(file)
+    data = json.load(open(path))
+
+    # Make a new timer
+    timer = mw.stop_timer_and_get_timer()
+
+    # Put the screen
+    screen = ReplayScreen(data, path)
+    screen.draw()
+    timer.timeout.connect(screen.draw)
+    timer.start()
+    mw.change_main_screen(screen)
+
+    # Disable stop pushButton and release start pushButton
+    pushButton_name_start = 'zcc_pushButton_start'
+    pushButton_name_stop = 'zcc_pushButton_stop'
+    mw.children[pushButton_name_stop].setDisabled(True)
+    mw.children[pushButton_name_start].setDisabled(False)
+
+
+mw.children['zcc_pushButton_replayCurve'].clicked.connect(
+    _handle_playback_button)

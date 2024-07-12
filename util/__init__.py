@@ -27,6 +27,8 @@ from loguru import logger
 # %% ---- 2024-07-09 ------------------------
 # Function and class
 def get_project_root():
+    # On the .exe runtime, the argv[0] is the pwd
+    # On the python runtime, the argv[0] is ''
     return Path(sys.argv[0]).parent
 
 

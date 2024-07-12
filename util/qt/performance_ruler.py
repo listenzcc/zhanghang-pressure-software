@@ -43,13 +43,15 @@ class PerformanceRuler(object):
     unique = None
     score_buffer = None
 
-    lock = threading.RLock()
     colormap = (
         np.array(mpl.color_sequences['tab10']) * 255).astype(np.uint8)
 
-    threads = []
+    lock = None
+    threads = None
 
     def __init__(self):
+        self.threads = []
+        self.lock = threading.RLock()
         pass
 
     def init_population(self):
@@ -83,8 +85,9 @@ class PerformanceRuler(object):
         # ! Will not start the self._update running if it is running.
         if (len(self.threads) > 0):
             logger.error(
-                'Can not start update since it had not been stopped yet')
+                f'Can not start update since it had not been stopped yet, {self.threads}')
             return
+
         t = Thread(target=self._update, daemon=True)
         t.start()
         self.threads.append(t)
@@ -99,9 +102,10 @@ class PerformanceRuler(object):
             self.running = False
             logger.debug('Sent stopping trigger')
             # Wait until the thread is really stopped
-            t = self.threads.pop()
-            t.join()
-            logger.debug(f'Totally stopped {t}')
+            while self.threads:
+                t = self.threads.pop()
+                t.join()
+                logger.debug(f'Totally stopped {t}')
         return
 
     def _update(self):
@@ -137,9 +141,9 @@ class PerformanceRuler(object):
             passed = time.time() - tic
             fps = frame_count / passed
 
-            if frame_count % 100 == 0:
+            if frame_count % 10 == 0:
                 print(
-                    f'fps: {fps:0.2f}, score: {score:0.4f}, moving: {len(m)}, passed: {passed:0.2f}')
+                    f'fps: {fps:0.2f}, frames: {frame_count:06d}, score: {score:0.4f}, moving: {len(m)}, passed: {passed:0.2f}')
 
             # Find willing to moving if their happiness are low,
             # and move them.

@@ -48,7 +48,7 @@ class CurveScreen(BaseExperimentScreen):
     marker_text_item = pg.TextItem('????')
     marker_legend = None
 
-    def __init__(self, design: dict, lcd_y, lcd_t, progress_bar, on_stop):
+    def __init__(self, design: dict, lcd_y, lcd_t, progress_bar, on_stop, **kwargs):
         super().__init__(design, lcd_y, lcd_t, progress_bar, on_stop)
         self.put_components()
         logger.debug('Initialized')
@@ -62,33 +62,14 @@ class CurveScreen(BaseExperimentScreen):
         # Disable autorange
         self.disableAutoRange()
 
-        self.showGrid(x=True, y=True)
-
         # Legend for marker
         self.marker_legend = self.getPlotItem().addLegend(offset=(1, 1))
 
         # Resize the widget on device range changed
         self.sigDeviceRangeChanged.connect(self.on_size_changed)
 
+        self.showGrid(x=True, y=True)
         return
-
-    def on_blocks_finished(self):
-        # If the flag_stopped is set, doing nothing
-        if self.flag_stopped:
-            return
-
-        # TODO: Save data
-
-        # Execute the on_stop function
-        try:
-            self.on_stop()
-        except Exception as e:
-            logger.error(f"Error executing on_stop: {e}")
-
-        # Set the flag_stopped to prevent the repeating operation
-        self.flag_stopped = True
-
-        logger.debug(f'Finished: {self.design}')
 
     def on_size_changed(self):
         # Put marker and make it unmoving
@@ -139,7 +120,7 @@ class CurveScreen(BaseExperimentScreen):
 
         # If mark is E, execute the blocks finished process
         if mark == 'E':
-            self.on_blocks_finished()
+            self.stop()
 
         if mark == 'F':
             self.feedback_curve.setData(times, self._limit(fake_y))
