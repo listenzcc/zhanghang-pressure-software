@@ -18,8 +18,10 @@ Functions:
 
 # %% ---- 2024-07-09 ------------------------
 # Requirements and constants
+from threading import Thread
+
 from .feedback_mode_enum import FeedbackModeEnum
-from . import project_name, software_version, project_root
+from . import logger, project_name, software_version, project_root
 
 
 # %% ---- 2024-07-09 ------------------------
@@ -98,6 +100,20 @@ class RunningOptions(object, metaclass=Singleton):
     g0 = int(open(project_root.joinpath('correction/g0')).read())
     g200 = int(open(project_root.joinpath('correction/g200')).read())
     offsetG0 = int(open(project_root.joinpath('correction/offset_g0')).read())
+
+    # Pseudo setting
+    fake_file_path = None
+
+    # Education mode flag
+    education_mode_flag = False
+
+    def write_correction(self, name, num):
+        def _write():
+            dst = project_root.joinpath('correction', name)
+            with open(dst, 'w') as f:
+                f.write(f'{num}')
+            logger.debug(f'Write {num} to {dst}')
+        Thread(target=_write, daemon=True).start()
 
 
 # ! It is designed to be the singleton object,

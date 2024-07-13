@@ -262,6 +262,11 @@ class RealTimeHIDReader(object):
         Returns:
             float: The converted pressure value. 
         """
+
+        self.g0 = rop.g0
+        self.g200 = rop.g200
+        self.offset_g0 = rop.offsetG0
+
         bias = self.offset_g0
 
         # ! Safe divide preventing g200 == g0

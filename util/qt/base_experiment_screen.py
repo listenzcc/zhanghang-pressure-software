@@ -89,6 +89,10 @@ class BaseExperimentScreen(pg.PlotWidget):
 
         # Initialize device
         self.HID_reader = RealTimeHIDReader()
+
+        if rop.fake_file_path:
+            self.HID_reader.fake_pressure.load_file(rop.fake_file_path)
+
         self.design = design
         self.bm = BlockManager(design)
 
@@ -151,62 +155,66 @@ class BaseExperimentScreen(pg.PlotWidget):
         # Subject info
         subject_info = self.subject_info
 
-        # ----------------------------------------
-        # ---- Save data and all others ----
+        def save_data():
+            # ----------------------------------------
+            # ---- Save data and all others ----
 
-        filename_stem = '-'.join([
-            subject_info['name'],
-            subject_info['datetime']])
-        save_path = rop.project_root.joinpath('Data')
-        paths = []
-        encoding = 'gbk'
+            filename_stem = '-'.join([
+                subject_info['name'],
+                subject_info['datetime']])
+            save_path = rop.project_root.joinpath('Data')
+            paths = []
+            encoding = 'gbk'
 
-        # 1. Save data
-        folder = save_path.joinpath('Data')
-        path = folder.joinpath(f'{filename_stem}.json')
-        path.parent.mkdir(exist_ok=True, parents=True)
-        json.dump(data, open(path, 'w', encoding=encoding))
-        paths.append(path)
+            # 1. Save data
+            folder = save_path.joinpath('Data')
+            path = folder.joinpath(f'{filename_stem}.json')
+            path.parent.mkdir(exist_ok=True, parents=True)
+            json.dump(data, open(path, 'w', encoding=encoding))
+            paths.append(path)
 
-        # 2. Save subject
-        folder = save_path.joinpath('Subject')
-        path = folder.joinpath(f'{filename_stem}.txt')
-        path.parent.mkdir(exist_ok=True, parents=True)
-        print(subject_info, file=open(path, 'w', encoding=encoding))
-        paths.append(path)
+            # 2. Save subject
+            folder = save_path.joinpath('Subject')
+            path = folder.joinpath(f'{filename_stem}.txt')
+            path.parent.mkdir(exist_ok=True, parents=True)
+            print(subject_info, file=open(path, 'w', encoding=encoding))
+            paths.append(path)
 
-        # 3. Save status
-        folder = save_path.joinpath('Status')
-        path = folder.joinpath(f'{filename_stem}.txt')
-        path.parent.mkdir(exist_ok=True, parents=True)
-        print(status, file=open(path, 'w', encoding=encoding))
-        paths.append(path)
+            # 3. Save status
+            folder = save_path.joinpath('Status')
+            path = folder.joinpath(f'{filename_stem}.txt')
+            path.parent.mkdir(exist_ok=True, parents=True)
+            print(status, file=open(path, 'w', encoding=encoding))
+            paths.append(path)
 
-        # 4. Save experiment
-        folder = save_path.joinpath('Experiment')
-        path = folder.joinpath(f'{filename_stem}.txt')
-        path.parent.mkdir(exist_ok=True, parents=True)
-        print(self.design, file=open(path, 'w', encoding=encoding))
-        paths.append(path)
+            # 4. Save experiment
+            folder = save_path.joinpath('Experiment')
+            path = folder.joinpath(f'{filename_stem}.txt')
+            path.parent.mkdir(exist_ok=True, parents=True)
+            print(self.design, file=open(path, 'w', encoding=encoding))
+            paths.append(path)
 
-        # Report
-        logger.debug(f'Saved data and others into {paths}')
+            # Report
+            logger.debug(f'Saved data and others into {paths}')
 
-        dialog = QtWidgets.QDialog()
-        dialog.setWindowTitle('Saved data')
-        layout = QtWidgets.QVBoxLayout()
-        message = QtWidgets.QTextBrowser(parent=dialog)
+            dialog = QtWidgets.QDialog()
+            dialog.setWindowTitle('Saved data')
+            layout = QtWidgets.QVBoxLayout()
+            message = QtWidgets.QTextBrowser(parent=dialog)
 
-        paths_string = '\n'.join([e.as_posix() for e in paths])
-        content = f'''
-Saved data into
+            paths_string = '\n'.join([e.as_posix() for e in paths])
+            content = '\n'.join(['Saved data into', paths_string])
+            # content = f'''\n Saved data into \n {paths_string} '''
+            message.setText(content)
+            layout.addWidget(message)
+            dialog.setLayout(layout)
+            dialog.exec_()
 
-{paths_string}
-        '''
-        message.setText(content)
-        layout.addWidget(message)
-        dialog.setLayout(layout)
-        dialog.exec_()
+        if rop.education_mode_flag:
+            logger.warning(
+                'Experiment stops, but the data is not saved since education_mode_flag is set')
+        else:
+            save_data()
 
         # Execute the on_stop function
         try:
@@ -215,6 +223,54 @@ Saved data into
             logger.error(f"Error executing on_stop: {e}")
 
         logger.debug(f'Finished: {self.design}')
+
+    def _correction_0g(self):
+        pairs = self.HID_reader.peek(100)
+        n = len(pairs)
+        if n == 0:
+            logger.warning(
+                "Failed to correct with the 0 g, since the data is empty")
+            return
+        g0 = int(sum(e[1] for e in pairs) / n)
+        rop.g0 = g0
+        rop.offsetG0 = g0
+        logger.debug(f"Re-correct the g0 to {g0} (with {n} points)")
+        logger.debug(f"Re-correct the offset_g0 to {g0} (with {n} points)")
+        # Write correction
+        rop.write_correction('g0', g0)
+        rop.write_correction('offset_g0', g0)
+        return
+
+    def _correction_200g(self):
+        pairs = self.HID_reader.peek(100)
+        n = len(pairs)
+        if n == 0:
+            logger.warning(
+                "Failed to correct with the 200 g, since the data is empty"
+            )
+            return
+        g200 = int(sum(e[1] for e in pairs) / n)
+        rop.g200 = g200
+        logger.debug(f"Re-correct the g200 to {g200} (with {n} points)")
+        # Write correction
+        rop.write_correction('g200', g200)
+        return
+
+    def _correction_offset_0g(self):
+        pairs = self.HID_reader.peek(100)
+        n = len(pairs)
+        if n == 0:
+            logger.warning(
+                "Failed to correct with the offset 0 g, since the data is empty"
+            )
+            return
+        offset_g0 = int(sum(e[1] for e in pairs) / n)
+        rop.offsetG0 = offset_g0
+        logger.debug(
+            f"Re-correct the offset_g0 to {offset_g0} (with {n} points)")
+        # Write correction
+        rop.write_correction('offset_g0', offset_g0)
+        return
 
 
 def realign_into_8ms_sampling(data: list) -> np.ndarray:

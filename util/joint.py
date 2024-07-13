@@ -16,6 +16,7 @@ Functions:
 """
 
 
+import contextlib
 # %% ---- 2024-07-09 ------------------------
 # Requirements and constants
 import json
@@ -174,6 +175,7 @@ def _update_experimentDesign(dct: dict, p: Path = None):
         total_length += block_length
 
     lines = [
+        f'# Using fake pressure data: {rop.fake_file_path}',
         f'# Using design: {posix}',
         f'# Short path:   {short_posix}',
         f'# Name:         {dct["name"]}',
@@ -595,7 +597,7 @@ def toggle_full_screen_display():
 # %%
 
 
-def _handle_playback_button():
+def _on_click_playback_button():
     # Read the existing data
     file, _ = QtWidgets.QFileDialog().getOpenFileName(
         caption='Read protocol',
@@ -628,4 +630,72 @@ def _handle_playback_button():
 
 
 mw.children['zcc_pushButton_replayCurve'].clicked.connect(
-    _handle_playback_button)
+    _on_click_playback_button)
+
+# %%
+
+
+def _on_click_load_fake_feedback_data_button():
+    # Read the existing data
+    file, _ = QtWidgets.QFileDialog().getOpenFileName(
+        caption='Read protocol',
+        dir=rop.project_root.joinpath('Data/Data').as_posix(),
+        filter="Json files (*.json)")
+
+    # Go on only when the file is not empty
+    if not file:
+        logger.warning('Not selecting any file')
+        return
+
+    # Set rop's fake_file_path attribute
+    path = Path(file)
+    rop.fake_file_path = path
+    logger.debug(f'Change fake_file_path to {path}')
+
+    # Update the experiment design part immediately
+    _update_experimentDesign(rop.design)
+
+
+mw.children['zcc_pushButton_loadFakeFeedback'].clicked.connect(
+    _on_click_load_fake_feedback_data_button)
+
+# %%
+
+
+def _handle_education_mode_radioButton():
+    name = 'zcc_radioButton_educationMode'
+
+    def _on_click():
+        rop.education_mode_flag = mw.children[name].isChecked()
+        logger.debug(f'Set education_mode_flat to {rop.education_mode_flag}')
+    mw.children[name].clicked.connect(_on_click)
+
+
+_handle_education_mode_radioButton()
+
+# %%
+
+
+def _handle_correction_pushButtons():
+    name_offsetG0 = 'zcc_pushButton_zeroOffset'
+    name_g0 = 'zcc_pushButton_0gPressure'
+    name_g200 = 'zcc_pushButton_200gPressure'
+
+    def _offsetG0():
+        with contextlib.suppress(Exception):
+            mw.main_screen_widget._correction_offset_0g()
+
+    def _correlation_g0():
+        with contextlib.suppress(Exception):
+            mw.main_screen_widget._correction_0g()
+
+    def _correlation_g200():
+        with contextlib.suppress(Exception):
+            mw.main_screen_widget._correction_200g()
+
+    mw.children[name_offsetG0].clicked.connect(_offsetG0)
+    mw.children[name_g0].clicked.connect(_correlation_g0)
+    mw.children[name_g200].clicked.connect(_correlation_g200)
+
+
+_handle_correction_pushButtons()

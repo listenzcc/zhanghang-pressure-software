@@ -1309,13 +1309,13 @@
             <rect>
              <x>0</x>
              <y>20</y>
-             <width>158</width>
+             <width>151</width>
              <height>31</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_21">
             <item>
-             <widget class="QPushButton" name="zcc_pushButton_0gOffset">
+             <widget class="QPushButton" name="zcc_pushButton_0gPressure">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -1328,7 +1328,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="zcc_pushButton_offset200g">
+             <widget class="QPushButton" name="zcc_pushButton_200gPressure">
               <property name="text">
                <string>砝码：200g</string>
               </property>
@@ -1384,7 +1384,7 @@
          </spacer>
         </item>
         <item>
-         <widget class="QRadioButton" name="zcc_radioButton_deviceFreeMode">
+         <widget class="QRadioButton" name="zcc_radioButton_educationMode">
           <property name="text">
            <string>演示模式</string>
           </property>
