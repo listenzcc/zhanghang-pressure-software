@@ -52,7 +52,6 @@ class PerformanceRuler(object):
     def __init__(self):
         self.threads = []
         self.lock = threading.RLock()
-        pass
 
     def init_population(self):
         '''
