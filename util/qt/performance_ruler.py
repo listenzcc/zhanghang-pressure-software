@@ -138,7 +138,10 @@ class PerformanceRuler(object):
             frame_count += 1
             score = np.mean(happiness)
             passed = time.time() - tic
-            fps = frame_count / passed
+            try:
+                fps = frame_count / passed
+            except ZeroDivisionError:
+                fps = 0
 
             if frame_count % 10 == 0:
                 print(

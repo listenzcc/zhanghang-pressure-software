@@ -594,6 +594,8 @@ def toggle_full_screen_display():
 
         logger.debug('Entered show full screen state')
 
+mw.children['zcc_pushButton_toggleFullScreen'].clicked.connect(toggle_full_screen_display)
+
 # %%
 
 

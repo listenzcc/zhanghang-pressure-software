@@ -72,7 +72,9 @@ class MainWindow(object):
         layout = QtWidgets.QHBoxLayout(self.window)
         self.middle_frame.setLayout(layout)
         self.main_screen_container = layout
-        # self.main_screen_container = self.children['zcc_horizontalLayout_mainScreen']
+
+        # Only use the window close button
+        self.window.setWindowFlags(QtCore.Qt.WindowCloseButtonHint)
 
     def toggle_full_screen_display(self):
         if QtCore.Qt.WindowFullScreen & self.windowState():
