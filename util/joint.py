@@ -400,19 +400,6 @@ def _handle_stop_pushButton():
     mw.children[pushButton_name_stop].setDisabled(True)
 
 
-def _handle_toggleFullScreen_pushButton():
-    '''
-    Handle the pushButton for toggle full screen display
-    '''
-    pushButton_name = 'zcc_pushButton_toggleFullScreen'
-
-    def _toggle_fullScreen_display():
-        # TODO: Toggle the full screen display for the 'zcc_graphicsView_monitor'
-        logger.debug('Toggle full screen display')
-
-    mw.children[pushButton_name].clicked.connect(_toggle_fullScreen_display)
-
-
 def _place_welcomeScreen_to_hBox():
     '''
     Place the main screen to its place
@@ -441,7 +428,6 @@ _handle_block_design_pushButtons()
 # Handling controlling buttons
 _handle_start_pushButton()
 _handle_stop_pushButton()
-_handle_toggleFullScreen_pushButton()
 
 # ----------------------------------------
 # ---- Put feedback modes ----
@@ -594,7 +580,9 @@ def toggle_full_screen_display():
 
         logger.debug('Entered show full screen state')
 
-mw.children['zcc_pushButton_toggleFullScreen'].clicked.connect(toggle_full_screen_display)
+
+mw.children['zcc_pushButton_toggleFullScreen'].clicked.connect(
+    toggle_full_screen_display)
 
 # %%
 
