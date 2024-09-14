@@ -95,11 +95,15 @@ class MainWindow(object):
                 logger.error(f'Unable to stop screen: {err} | {pg_widget}')
             self.main_screen_container.removeWidget(self.main_screen_widget)
             logger.debug(
-                f'Removed existing widget: {self.main_screen_container}')
+                f'Removed existing widget: {self.main_screen_widget} from {self.main_screen_container}')
 
         # Put a new one
+        logger.warning(
+            f'Main screen container is empty: {self.main_screen_container.isEmpty()}')
         self.main_screen_widget = pg_widget
         self.main_screen_container.addWidget(pg_widget)
+        logger.warning(
+            f'Main screen container is empty: {self.main_screen_container.isEmpty()}')
         logger.debug(f'Put {pg_widget} to {self.main_screen_container}')
 
     def stop_timer_and_get_timer(self):

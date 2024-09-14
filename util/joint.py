@@ -463,6 +463,12 @@ _bind_number(
     mw.children['zcc_doubleSpinBox_metricThreshold2'], 'metricThreshold2')
 _bind_number(
     mw.children['zcc_doubleSpinBox_metricThreshold3'], 'metricThreshold3')
+_bind_number(
+    mw.children['zcc_doubleSpinBox_metricThreshold1_2'], 'metricThreshold1_2')
+_bind_number(
+    mw.children['zcc_doubleSpinBox_metricThreshold2_2'], 'metricThreshold2_2')
+_bind_number(
+    mw.children['zcc_doubleSpinBox_metricThreshold3_2'], 'metricThreshold3_2')
 
 
 # ----------------------------------------

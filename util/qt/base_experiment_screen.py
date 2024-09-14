@@ -194,6 +194,12 @@ class BaseExperimentScreen(pg.PlotWidget):
             print(self.design, file=open(path, 'w', encoding=encoding))
             paths.append(path)
 
+            # 5. The score and thresholds
+            metric_range_1 = (rop.metricThreshold1, rop.metricThreshold1_2)
+            metric_range_2 = (rop.metricThreshold2, rop.metricThreshold2_2)
+            metric_range_3 = (rop.metricThreshold3, rop.metricThreshold3_2)
+            score = '??'
+
             # Report
             logger.debug(f'Saved data and others into {paths}')
 
@@ -203,7 +209,15 @@ class BaseExperimentScreen(pg.PlotWidget):
             message = QtWidgets.QTextBrowser(parent=dialog)
 
             paths_string = '\n'.join([e.as_posix() for e in paths])
-            content = '\n'.join(['Saved data into', paths_string])
+            content = '\n'.join([
+                '--------------------',
+                f'The score is {score}',
+                f'The score range 1 is {metric_range_1}',
+                f'The score range 2 is {metric_range_2}',
+                f'The score range 3 is {metric_range_3}',
+                '--------------------',
+                'Saved data into path:',
+                paths_string])
             # content = f'''\n Saved data into \n {paths_string} '''
             message.setText(content)
             layout.addWidget(message)

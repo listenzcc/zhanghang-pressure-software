@@ -88,8 +88,11 @@ class RunningOptions(object, metaclass=Singleton):
 
     # Metrics settings
     metricThreshold1 = 30
+    metricThreshold1_2 = 50
     metricThreshold2 = 60
+    metricThreshold2_2 = 80
     metricThreshold3 = 90
+    metricThreshold3_2 = 100
 
     # Device settings
     idealSamplingRate = 125  # Hz
