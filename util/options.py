@@ -16,6 +16,7 @@ Functions:
 """
 
 
+import contextlib
 # %% ---- 2024-07-09 ------------------------
 # Requirements and constants
 from threading import Thread
@@ -95,9 +96,9 @@ class RunningOptions(object, metaclass=Singleton):
     metricThreshold3_2 = 100
 
     # Metric range prompt
-    metricRange1Prompt = '您的得分落在区间1之内，这通常意味着。。。。。。,请继续加油！'
-    metricRange2Prompt = '您的得分落在区间2之内，这通常意味着。。。。。。,请再接再厉！'
-    metricRange3Prompt = '您的得分落在区间3之内，这通常意味着。。。。。。,请继续保持！'
+    metricRange1Prompt = '区间1的提示词，详见/asset/prompts/metric range1 prompt.txt'
+    metricRange2Prompt = '区间2的提示词，详见/asset/prompts/metric range2 prompt.txt'
+    metricRange3Prompt = '区间3的提示词，详见/asset/prompts/metric range3 prompt.txt'
 
     # Device settings
     idealSamplingRate = 125  # Hz
@@ -123,10 +124,28 @@ class RunningOptions(object, metaclass=Singleton):
             logger.debug(f'Write {num} to {dst}')
         Thread(target=_write, daemon=True).start()
 
+    def read_metric_ranges_prompt(self):
+        folder = project_root.joinpath('asset/prompts')
+        with contextlib.suppress(Exception):
+            self.metricRange1Prompt = open(folder.joinpath(
+                'metric range1 prompt.txt'), 'r', encoding='utf8').read().strip()
+        with contextlib.suppress(Exception):
+            self.metricRange2Prompt = open(folder.joinpath(
+                'metric range2 prompt.txt'), 'r', encoding='utf8').read().strip()
+        with contextlib.suppress(Exception):
+            self.metricRange3Prompt = open(folder.joinpath(
+                'metric range3 prompt.txt'), 'r', encoding='utf8').read().strip()
+        logger.debug('Read metric ranges prompt: {}'.format([
+            self.metricRange1Prompt,
+            self.metricRange2Prompt,
+            self.metricRange3Prompt,
+        ]))
+
 
 # ! It is designed to be the singleton object,
 # ! if something weird happens, check this.
 rop = RunningOptions()
+rop.read_metric_ranges_prompt()
 
 # %% ---- 2024-07-09 ------------------------
 # Play ground

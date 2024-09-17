@@ -1,0 +1,5 @@
+# File: /asset/prompts/metric range3 prompt.txt
+# Author: Chuncheng Zhang
+# Date: 2024-9-17
+
+您的得分落在区间3之内，这通常意味着。。。。。。,请继续保持！

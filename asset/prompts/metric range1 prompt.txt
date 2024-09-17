@@ -1,0 +1,5 @@
+# File: /asset/prompts/metric range1 prompt.txt
+# Author: Chuncheng Zhang
+# Date: 2024-9-17
+
+您的得分落在区间1之内，这通常意味着。。。。。。,请继续加油！
