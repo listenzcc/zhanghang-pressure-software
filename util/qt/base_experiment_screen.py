@@ -198,7 +198,7 @@ class BaseExperimentScreen(pg.PlotWidget):
             metric_range_1 = (rop.metricThreshold1, rop.metricThreshold1_2)
             metric_range_2 = (rop.metricThreshold2, rop.metricThreshold2_2)
             metric_range_3 = (rop.metricThreshold3, rop.metricThreshold3_2)
-            score = '??'
+            score = np.random.randint(0, 100)
 
             # Report
             logger.debug(f'Saved data and others into {paths}')
@@ -206,22 +206,35 @@ class BaseExperimentScreen(pg.PlotWidget):
             dialog = QtWidgets.QDialog()
             dialog.setWindowTitle('Saved data')
             layout = QtWidgets.QVBoxLayout()
-            message = QtWidgets.QTextBrowser(parent=dialog)
+            text_browser = QtWidgets.QTextBrowser(parent=dialog)
 
-            paths_string = '\n'.join([e.as_posix() for e in paths])
-            content = '\n'.join([
-                '--------------------',
+            # ----------------------------------------
+            # ---- Generate output prompt ----
+            score_content = '\n'.join([
                 f'The score is {score}',
                 f'The score range 1 is {metric_range_1}',
                 f'The score range 2 is {metric_range_2}',
                 f'The score range 3 is {metric_range_3}',
-                '--------------------',
+            ])
+
+            prompt_content = '\n'.join([
+                f'{rop.metricRange1Prompt if score <= metric_range_1[1] and score >= metric_range_1[0] else ""}',
+                f'{rop.metricRange2Prompt if score <= metric_range_2[1] and score >= metric_range_2[0] else ""}',
+                f'{rop.metricRange3Prompt if score <= metric_range_3[1] and score >= metric_range_3[0] else ""}',
+            ])
+
+            paths_string = '\n'.join([e.as_posix() for e in paths])
+            saving_content = '\n'.join([
                 'Saved data into path:',
                 paths_string])
-            # content = f'''\n Saved data into \n {paths_string} '''
-            message.setText(content)
-            layout.addWidget(message)
+
+            content = '\n----------------------------------------\n'.join(
+                [score_content, prompt_content, saving_content])
+
+            text_browser.setText(content)
+            layout.addWidget(text_browser)
             dialog.setLayout(layout)
+            dialog.resize(600, 600)
             dialog.exec_()
 
         if rop.education_mode_flag:

@@ -94,6 +94,11 @@ class RunningOptions(object, metaclass=Singleton):
     metricThreshold3 = 90
     metricThreshold3_2 = 100
 
+    # Metric range prompt
+    metricRange1Prompt = '您的得分落在区间1之内，这通常意味着。。。。。。,请继续加油！'
+    metricRange2Prompt = '您的得分落在区间2之内，这通常意味着。。。。。。,请再接再厉！'
+    metricRange3Prompt = '您的得分落在区间3之内，这通常意味着。。。。。。,请继续保持！'
+
     # Device settings
     idealSamplingRate = 125  # Hz
     # ! Device name, ask the product if the device changes
