@@ -157,6 +157,8 @@ class TwoStepScore_Animation_CatClimbsTree(TwoStepScorer, AutomaticAnimation):
             logger.info('Loaded required resource')
         except Exception as err:
             self.resource_traceback = f'{err}'
+            import traceback
+            traceback.print_exc()
             logger.error('Failed loading required resources')
 
     def reset(self):
@@ -174,32 +176,24 @@ class TwoStepScore_Animation_CatClimbsTree(TwoStepScorer, AutomaticAnimation):
 
         # --------------------
         # Load frames
-        n = 60
+        n = 134
         # n = 6
         self.images_2nd = []
         for j in tqdm(range(n), f'Loading frames: {name}'):
-            img = Image.open(folder.joinpath(f'frames/{j+1}.jpg'))
+            img = Image.open(folder.joinpath(f'frames/{j}.jpg'))
             self.images_2nd.append(img)
         logger.debug(f'Loaded {n} frames of {name}')
 
         # --------------------
         # Load the land image
-        land_image = Image.open(folder.joinpath('parts/land-only.jpg'))
+        land_image = Image.open(folder.joinpath('parts/land-only.png'))
         logger.debug('Loaded land image')
 
         # --------------------
         # Load tree image and generate its mask
         tree_image = Image.open(
-            folder.joinpath('parts/tree-only.jpg'))
+            folder.joinpath('parts/tree-only.png'))
         logger.debug('Loaded tree image')
-
-        # Create mask for the submarine
-        mat = np.array(tree_image.convert('L'))
-        _mat = mat.copy()
-        mat[_mat < 250] = 255
-        mat[_mat >= 250] = 0
-        tree_mask = Image.fromarray(mat, mode='L')
-        logger.debug('Generated submarine image')
 
         # --------------------
         # Load blue and red circle
@@ -212,7 +206,16 @@ class TwoStepScore_Animation_CatClimbsTree(TwoStepScorer, AutomaticAnimation):
 
         # --------------------
         # Mark the red colored circle in the land_image
-        land_image.paste(tree_image, (0, 0), tree_mask)
+        if tree_image.mode == 'RGBA':
+            land_image.paste(tree_image, (0, 0), tree_image)
+        else:
+            mat = np.array(tree_image.convert('L'))
+            _mat = mat.copy()
+            mat[_mat < 250] = 255
+            mat[_mat >= 250] = 0
+            tree_mask = Image.fromarray(mat, mode='L')
+            logger.debug('Generated tree image')
+            land_image.paste(tree_image, (0, 0), tree_mask)
         land_image.paste(red_circle_image, (0, 0), red_circle_image)
 
         # --------------------
@@ -236,7 +239,7 @@ class TwoStepScore_Animation_CatClimbsTree(TwoStepScorer, AutomaticAnimation):
         self.image_size = image_size
         self.land_image = land_image.resize(image_size)
         self.tree_image = tree_image.resize(image_size)
-        self.tree_mask = tree_mask.resize(image_size)
+        # self.tree_mask = tree_mask.resize(image_size)
         self.blue_circle_image = blue_circle_image.resize(image_size)
         self.red_circle_image = red_circle_image.resize(image_size)
         logger.debug('Resized resources')
@@ -367,23 +370,23 @@ class TwoStepScore_Animation_CatLeavesSubmarine(TwoStepScorer, AutomaticAnimatio
 
         # --------------------
         # Load frames
-        n = 60
+        n = 136
         # n = 6
         self.images_2nd = []
         for j in tqdm(range(n), f'Loading frames: {name}'):
-            img = Image.open(folder.joinpath(f'frames/{j+1}.jpg'))
+            img = Image.open(folder.joinpath(f'frames/{j}.jpg'))
             self.images_2nd.append(img)
         logger.debug(f'Loaded {n} frames of {name}')
 
         # --------------------
         # Load the ocean image
-        ocean_image = Image.open(folder.joinpath('parts/ocean-only.jpg'))
+        ocean_image = Image.open(folder.joinpath('parts/ocean-only.png'))
         logger.debug('Loaded ocean image')
 
         # --------------------
         # Load submarine image and generate its mask
         submarine_image = Image.open(
-            folder.joinpath('parts/submarine-only.jpg'))
+            folder.joinpath('parts/submarine-only.png'))
         logger.debug('Loaded submarine image')
 
         # --------------------
@@ -497,10 +500,16 @@ class TwoStepScore_Animation_CatLeavesSubmarine(TwoStepScorer, AutomaticAnimatio
                 # score -> infinity, dy -> 1
                 # score -> 0, dy -> 0
                 dy = (1 - np.exp(-np.abs(score / score_scale)))
-                img.paste(
-                    self.submarine_image,
-                    (0, int(dy * max_d_height)),
-                    self.submarine_mask)
+                if self.submarine_image.mode == 'RGBA':
+                    img.paste(
+                        self.submarine_image,
+                        (0, int(dy * max_d_height)),
+                        self.submarine_image)
+                else:
+                    img.paste(
+                        self.submarine_image,
+                        (0, int(dy * max_d_height)),
+                        self.submarine_mask)
                 img = img.resize(image_size)
 
                 self.fifo_buffer.append(img)
