@@ -88,11 +88,11 @@ class RunningOptions(object, metaclass=Singleton):
     design = {"name": "N.A.", "maker": "N.A.", "_buffer": []}
 
     # Metrics settings
-    metricThreshold1 = 30
-    metricThreshold1_2 = 50
+    metricThreshold1 = 0
+    metricThreshold1_2 = 60
     metricThreshold2 = 60
     metricThreshold2_2 = 80
-    metricThreshold3 = 90
+    metricThreshold3 = 80
     metricThreshold3_2 = 100
 
     # Metric range prompt

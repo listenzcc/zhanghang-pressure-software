@@ -21,6 +21,7 @@ Functions:
 import numpy as np
 import pyqtgraph as pg
 
+from PIL import Image
 from PySide2 import QtWidgets
 from PySide2.QtGui import QFont
 
@@ -29,10 +30,71 @@ from .base_experiment_screen import BaseExperimentScreen
 from ..options import rop
 from .. import logger
 
+root_path = rop.project_root
 
 # %% ---- 2024-07-11 ------------------------
 # Function and class
+
+
+def convert_rgb_to_rgba(img, mask: np.ndarray = None):
+    '''
+    Convert rgb to rgba img.
+    The (255, 255, 255) white color is converted to transparent.
+    '''
+
+    def _guess_mask():
+        # Guess the mask from the given img
+        # The transparent color is white (255, 255, 255)
+        mat = np.sum(np.asarray(img), 2)
+        mask = mat * 0 + 255
+        mask[mat == 255*3] = 0
+        return mask
+
+    # Convert white color to transparent
+    if mask is None:
+        mask = _guess_mask()
+
+    # Make the new array for the RGBA img
+    mat = np.zeros((img.size[1], img.size[0], 4))
+    mat[:, :, :3] = np.asarray(img)
+    mat[:, :, 3] = mask
+
+    # Return
+    return Image.fromarray(mat.astype('uint8'), mode='RGBA')
+
+
+class Balloon(object):
+    raw_img = Image.open(root_path.joinpath(
+        'asset/img/balloon/气球（没尾巴）.jpg'))
+    reference_img = Image.open(root_path.joinpath(
+        'asset/img/balloon/reference.png'))
+    animating_img = convert_rgb_to_rgba(Image.open(root_path.joinpath(
+        'asset/img/balloon/animating.png')))
+    img: Image = None
+
+    def __init__(self):
+        self.img = self.raw_img.convert('RGB')
+
+    def resize(self, width, height):
+        size = (int(width), int(height))
+        self.img = self.raw_img.resize(size).convert('RGB')
+        self.reference_img = self.reference_img.resize(size)
+        self.animating_img = self.animating_img.resize(size)
+        return self.img
+
+    def get_rgb(self):
+        '''Get RGB matrix'''
+        mat = np.array(self.img, dtype=np.uint8)
+        return mat
+
+
+balloon = Balloon()
+
+
 class HoldingBallScreen(BaseExperimentScreen):
+    # Img
+    image_item = pg.ImageItem()
+
     # Ellipse and pens
     delayed_ellipse = QtWidgets.QGraphicsEllipseItem(-1, -1, 2, 2)
     feedback_ellipse = QtWidgets.QGraphicsEllipseItem(-1, -1, 2, 2)
@@ -57,12 +119,19 @@ class HoldingBallScreen(BaseExperimentScreen):
         self.feedback_ellipse.setPen(self.feedback_pen)
         self.reference_ellipse.setPen(self.reference_pen)
 
+        # mat = balloon.get_rgb()
+        img = Image.composite(
+            balloon.animating_img, balloon.reference_img, balloon.animating_img)
+        mat = np.array(img.convert('RGB'))
+        self.image_item.setImage(mat[::-1].transpose([1, 0, 2]))
+
+        self.addItem(self.image_item)
         self.addItem(self.delayed_ellipse)
         self.addItem(self.feedback_ellipse)
         self.addItem(self.reference_ellipse)
 
         # Disable autorange
-        self.disableAutoRange()
+        # self.disableAutoRange()
 
         self.showGrid(x=True, y=True)
 
@@ -71,6 +140,7 @@ class HoldingBallScreen(BaseExperimentScreen):
 
         # Resize the widget on device range changed
         self.sigDeviceRangeChanged.connect(self.on_size_changed)
+        self.on_size_changed()
 
         return
 
@@ -78,13 +148,30 @@ class HoldingBallScreen(BaseExperimentScreen):
         # Change range dynamically
         width = self.width()
         height = self.height()
+
         r = width / height
+        k = np.min((width, height))
+        k = 500
+
+        # Change the xrange and the balloon img
+        # The _xy_limit is updated automatically, since the self.width() and self.height() doesn't work well.
         if width > height:
-            self.setYRange(-2, 2)
-            self.setXRange(-2*r, 2*r)
+            self.setYRange(-0, k)
+            self.setXRange(-0*r, k*r)
+            balloon.resize(k*r, k)
+            self._xy_limit = (k*r, k)
         else:
-            self.setXRange(-2, 2)
-            self.setYRange(-2/r, 2*r)
+            self.setXRange(-0, k)
+            self.setYRange(-0/r, k/r)
+            balloon.resize(k, k/r)
+            self._xy_limit = (k, k/r)
+
+        # mat = balloon.get_rgb()
+        img = Image.composite(
+            balloon.animating_img, balloon.reference_img, balloon.animating_img)
+        mat = np.array(img.convert('RGB'))
+        self.image_item.setImage(mat[::-1].transpose([1, 0, 2]))
+
         logger.debug(f'Changed range with width {width}, height {height}')
 
         # Put marker and make it unmoving
@@ -108,8 +195,11 @@ class HoldingBallScreen(BaseExperimentScreen):
             - v > ref: 1 -> 0, exp(-d)
             - v < ref: 1 -> +infinity, 2-exp(-d)
         '''
-
         # self.update_range()
+        # r = np.min((self.width(), self.height())) / 2
+        width, height = self._xy_limit
+        r = np.min(self._xy_limit)
+        r *= 0.5
 
         # Compute normalized different between y and ref
         d = np.abs((v-ref) / ref)
@@ -118,11 +208,15 @@ class HoldingBallScreen(BaseExperimentScreen):
             k = np.exp(-d)
         else:
             k = 2 - np.exp(-d)
+        k *= r
 
         x = -k
         y = -k
         w = 2 * k
         h = 2 * k
+
+        x += width/2
+        y += height/2
 
         return x, y, w, h
 
@@ -164,13 +258,26 @@ class HoldingBallScreen(BaseExperimentScreen):
         if mark == 'E':
             self.stop()
 
+        # Set the reference ellipse
+        a, b, c, d = self.compute_ellipse_coordinates(ref, ref)
+        self.reference_ellipse.setRect(a, b, c, d)
+
         # Compute coordinates and set rect
-        if mark == 'F':
-            a, b, c, d = self.compute_ellipse_coordinates(ref, fake_y[-1])
-            self.feedback_ellipse.setRect(a, b, c, d)
-        else:
-            a, b, c, d = self.compute_ellipse_coordinates(ref, real_y[-1])
-            self.feedback_ellipse.setRect(a, b, c, d)
+        y_value = fake_y[-1] if mark == 'F' else real_y[-1]
+        a, b, c, d = self.compute_ellipse_coordinates(ref, y_value)
+        self.feedback_ellipse.setRect(a, b, c, d)
+
+        # Draw the balloon image
+        # mat = balloon.get_rgb()
+        k = int(((y_value - ref) / ref) * 500 * 0.4)
+        img = balloon.reference_img.copy()
+        sz = img.size
+        img1 = balloon.animating_img.copy().resize((sz[0]-2*k, sz[1]+2*k))
+        img.paste(img1, (k, -k), img1)
+        # img = Image.composite(
+        #     balloon.animating_img, balloon.reference_img, balloon.animating_img)
+        mat = np.array(img.convert('RGB'))
+        self.image_item.setImage(mat[::-1].transpose([1, 0, 2]))
 
         # Get delayed_data
         delayed_data = self.HID_reader.peek_by_seconds(
@@ -183,14 +290,10 @@ class HoldingBallScreen(BaseExperimentScreen):
             fake_d_y = delayed_data[:, 1]
             d_times = delayed_data[:, 4]
             # Compute coordinates and set rect
-            if mark == 'F':
-                a, b, c, d = self.compute_ellipse_coordinates(
-                    ref, fake_d_y[-1])
-                self.delayed_ellipse.setRect(a, b, c, d)
-            else:
-                a, b, c, d = self.compute_ellipse_coordinates(
-                    ref, real_d_y[-1])
-                self.delayed_ellipse.setRect(a, b, c, d)
+            y_value = fake_d_y[-1] if mark == 'F' else real_d_y[-1]
+            a, b, c, d = self.compute_ellipse_coordinates(
+                ref, y_value)
+            self.delayed_ellipse.setRect(a, b, c, d)
 
         # Update the visible for the curves
         if mark == '+':
