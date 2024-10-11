@@ -62,6 +62,9 @@ class TwoStepsScoreAnimationScreen(BaseExperimentScreen):
         self.tssa = tssa
         # Reset the animation
         self.tssa.reset()
+        mat = pil2rgb(self.tssa.welcome_img)
+        # Transpose the shape for the matrix
+        self.image_item.setImage(mat[::-1].transpose([1, 0, 2]))
         logger.debug(f'Loaded tssa {self.tssa}')
 
         self.next_animation_update_seconds = 0

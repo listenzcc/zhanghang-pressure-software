@@ -148,6 +148,7 @@ class TwoStepScore_Animation_CatClimbsTree(TwoStepScorer, AutomaticAnimation):
     images_2nd = []  # RGB PIL Images
     update_score_locked = False
     resource_OK = False
+    welcome_img: Image = None
 
     def __init__(self):
         super(TwoStepScore_Animation_CatClimbsTree, self).__init__()
@@ -168,6 +169,9 @@ class TwoStepScore_Animation_CatClimbsTree(TwoStepScorer, AutomaticAnimation):
     def load_cat_climbs_tree_resources(self):
         name = 'cat-climbs-tree'
         folder = root_path.joinpath(f'asset/img/{name}')
+
+        self.welcome_img = Image.open(root_path.joinpath(
+            'asset/img', name, 'welcome.png')).convert('RGB')
 
         # --------------------
         # ! The relative small size of the image
@@ -324,7 +328,7 @@ class TwoStepScore_Animation_CatClimbsTree(TwoStepScorer, AutomaticAnimation):
                 # score -> infinity, dy -> 1
                 # score -> 0, dy -> 0
                 dy = -score / score_scale
-                # img.paste(self.red_circle_image, (0, 0), self.red_circle_image)
+                img.paste(self.red_circle_image, (0, 0), self.red_circle_image)
                 img.paste(
                     self.blue_circle_image,
                     (0, int(dy * max_d_height)),
@@ -344,6 +348,7 @@ class TwoStepScore_Animation_CatLeavesSubmarine(TwoStepScorer, AutomaticAnimatio
     images_2nd = []  # RBG PIL images
     update_score_locked = False
     resource_OK = False
+    welcome_img: Image = None
 
     def __init__(self):
         super(TwoStepScore_Animation_CatLeavesSubmarine, self).__init__()
@@ -361,6 +366,8 @@ class TwoStepScore_Animation_CatLeavesSubmarine(TwoStepScorer, AutomaticAnimatio
 
     def load_cat_leaves_submarine_resources(self):
         name = 'cat-leaves-submarine'
+        self.welcome_img = Image.open(root_path.joinpath(
+            'asset/img', name, 'welcome.png')).convert('RGB')
         folder = root_path.joinpath(f'asset/img/{name}')
 
         # --------------------

@@ -15,5 +15,5 @@ Build into .exe
 # The app.exe is located inside the dist directory
 # After building, **manually copy** the following directories into the dist directory to make the app.exe working
 # conf, correction, font, img, log, Protocols, resource, translate
-pyinstaller.exe --onefile app.py
+pyinstaller.exe --onefile main.py
 ```
