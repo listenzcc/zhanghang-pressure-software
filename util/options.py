@@ -76,6 +76,10 @@ class RunningOptions(object, metaclass=Singleton):
 
     flagDisplayDelayedCurve = True
 
+    flagDisplayGrid = False
+    flagDisplayAxis = True
+    flagDisplayMarker = True
+
     # Feedback model
     feedback_model: FeedbackModeEnum = None
 

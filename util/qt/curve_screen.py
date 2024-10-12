@@ -51,6 +51,10 @@ class CurveScreen(BaseExperimentScreen):
     def __init__(self, design: dict, lcd_y, lcd_t, progress_bar, on_stop, **kwargs):
         super().__init__(design, lcd_y, lcd_t, progress_bar, on_stop)
         self.put_components()
+
+        self.passed_threshold_update_delay_curve = rop.delayedLength
+        self.delay_curve_dict = None
+
         logger.debug('Initialized')
 
     def put_components(self):
@@ -68,7 +72,7 @@ class CurveScreen(BaseExperimentScreen):
         # Resize the widget on device range changed
         self.sigDeviceRangeChanged.connect(self.on_size_changed)
 
-        self.showGrid(x=True, y=True)
+        self.showGrid(x=False, y=False)
         return
 
     def on_size_changed(self):
@@ -78,7 +82,7 @@ class CurveScreen(BaseExperimentScreen):
         self.marker_text_item.setFont(font)
         self.marker_text_item.setAnchor((0, 0))
         self.marker_text_item.setColor("red")
-        self.marker_text_item.setPos(self.width()/2, self.height()/2)
+        self.marker_text_item.setPos(self.width()*0.6, self.height()*0.75)
         self.marker_text_item.setFlag(
             self.marker_text_item.GraphicsItemFlag.ItemIgnoresTransformations
         )
@@ -87,6 +91,19 @@ class CurveScreen(BaseExperimentScreen):
 
     def draw(self):
         self.frames += 1
+
+        # Toggle grid
+        # self.showGrid(x=rop.flagDisplayGrid, y=rop.flagDisplayGrid)
+
+        # Toggle marker
+        self.marker_legend.setVisible(rop.flagDisplayMarker)
+
+        if rop.flagDisplayAxis:
+            self.showAxis('bottom')
+            self.showAxis('left')
+        else:
+            self.hideAxis('bottom')
+            self.hideAxis('left')
 
         # Compute peek_length based on delayedLength option
         peek_length = np.max([10, rop.delayedLength*2])
@@ -126,7 +143,6 @@ class CurveScreen(BaseExperimentScreen):
             self.feedback_curve.setData(times, self._limit(fake_y))
         else:
             self.feedback_curve.setData(times, self._limit(real_y))
-        self.reference_curve.setData(times, self._limit(ref_y))
 
         # Get delayed_data
         delayed_data = self.HID_reader.peek_by_seconds(
@@ -138,10 +154,27 @@ class CurveScreen(BaseExperimentScreen):
             real_d_y = delayed_data[:, 0]
             fake_d_y = delayed_data[:, 1]
             d_times = delayed_data[:, 4]
-            if mark == 'F':
-                self.delayed_curve.setData(d_times, self._limit(fake_d_y))
-            else:
-                self.delayed_curve.setData(d_times, self._limit(real_d_y))
+
+            # Only update the curve shape at the **next** rop.delayedLength arrives
+            if passed > self.passed_threshold_update_delay_curve:
+                self.passed_threshold_update_delay_curve += rop.delayedLength
+                logger.debug(
+                    f'Step the passed_threshold to {self.passed_threshold_update_delay_curve}')
+                if mark == 'F':
+                    self.delayed_curve.setData(
+                        d_times+rop.delayedLength, self._limit(fake_d_y))
+                    self.delay_curve_dict = dict(
+                        p=passed, x=d_times, y=self._limit(fake_d_y))
+                else:
+                    self.delayed_curve.setData(
+                        d_times+rop.delayedLength, self._limit(real_d_y))
+                    self.delay_curve_dict = dict(
+                        p=passed, x=d_times, y=self._limit(real_d_y))
+            elif self.delay_curve_dict is not None:
+                x = self.delay_curve_dict['x']
+                y = self.delay_curve_dict['y']
+                p = self.delay_curve_dict['p']
+                self.delayed_curve.setData(x+passed-p+rop.delayedLength, y)
 
         # Update the visible for the curves
         if mark == '+':
@@ -165,7 +198,15 @@ class CurveScreen(BaseExperimentScreen):
         # Set range
         self.setYRange(rop.yMin, rop.yMax)
         # Keep the current data point on the horizontal center
-        self.setXRange(times[0], 2*times[-1] - times[0])
+        x1 = times[-1]
+        self.setXRange(x1-peek_length, x1+peek_length, padding=0)
+
+        # Draw the full_length ref curve
+        def draw_full_length_ref_curve():
+            self.reference_curve.setData(
+                [x1-peek_length, x1+peek_length], [rop.yReference for _ in range(2)])
+
+        draw_full_length_ref_curve()
 
         # Set LED
         self.lcd_y.display(f'{real_y[-1]:0.2f}')

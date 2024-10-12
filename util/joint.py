@@ -490,6 +490,13 @@ _bind_toggle(
 _bind_toggle(
     mw.children['zcc_checkBox_flagDisplayDelayedCurve'], 'flagDisplayDelayedCurve')
 
+_bind_toggle(
+    mw.children['zcc_checkBox_grid'], 'flagDisplayGrid')
+_bind_toggle(
+    mw.children['zcc_checkBox_axis'], 'flagDisplayAxis')
+_bind_toggle(
+    mw.children['zcc_checkBox_marker'], 'flagDisplayMarker')
+
 # %% ---- 2024-07-09 ------------------------
 # Pending
 
