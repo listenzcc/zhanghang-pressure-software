@@ -72,6 +72,9 @@ class BlockManager(object):
             - t2 (float): remain times for the whole experiment, -1 for empty design, 0 for running out all the blocks.
             - remain_ratio (float): percent, how many percent the experiment is remaining.
         '''
+        prompts = dict(
+            block_empty='Block empty'
+        )
         # Return for empty design
         if self.empty_design_flag:
             return 'O', -1, -1, 1
@@ -79,7 +82,7 @@ class BlockManager(object):
         # Return for no blocks remained
         if len(self.blocks) == 0:
             logger.warning('No blocks remain')
-            return 'E', 0, 0, 0
+            return prompts['block_empty'], 0, 0, 0
 
         # The blocks is not started yet
         if t < self.blocks[0]['start']:
@@ -97,7 +100,7 @@ class BlockManager(object):
         # Again, return for no blocks remained
         if len(self.blocks) == 0:
             logger.warning('No blocks remain')
-            return 'E', 0, 0, 0
+            return prompts['block_empty'], 0, 0, 0
 
         mark = self.mark_map.get(self.blocks[0]['name'], '?')
         t1 = self.blocks[0]['stop'] - t

@@ -136,7 +136,7 @@ class BaseExperimentScreen(pg.PlotWidget):
         # ! Set the flag must be very quick to truly prevent that
         self.flag_stopped = True
 
-        # TODO: Save data
+        # Save data
         # Get and resample all the data
         data = self.HID_reader.stop()
         # Resampling the data into 125 Hz

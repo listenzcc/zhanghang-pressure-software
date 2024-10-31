@@ -533,10 +533,18 @@ class KeyPressFilter(QtCore.QObject):
         # Esc is pressed, exit the application
         if known_key_code.get(key_code) == 'Esc':
             logger.debug('Got Esc pressed')
-            try:
-                stop_experiment()
-            finally:
-                app.exit()
+            # Switch to normal display ONLY
+            if QtCore.Qt.WindowFullScreen & mw.window.windowState():
+                toggle_full_screen_display()
+
+            def close_window():
+                # Method for closing the window
+                try:
+                    stop_experiment()
+                finally:
+                    app.exit()
+
+            return
 
         # s is pressed, toggle start and stop experiment
         if known_key_code.get(key_code) == 's':

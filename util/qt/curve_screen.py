@@ -45,14 +45,14 @@ class CurveScreen(BaseExperimentScreen):
     reference_pen = pg.mkPen(color='green')
 
     # Marker
-    marker_text_item = pg.TextItem('????')
+    marker_text_item = pg.TextItem('????', anchor=(0.5, 0.5))
     marker_legend = None
 
     def __init__(self, design: dict, lcd_y, lcd_t, progress_bar, on_stop, **kwargs):
         super().__init__(design, lcd_y, lcd_t, progress_bar, on_stop)
         self.put_components()
 
-        self.passed_threshold_update_delay_curve = rop.delayedLength
+        self.passed_threshold_update_delay_curve = 0  # rop.delayedLength
         self.delay_curve_dict = None
 
         logger.debug('Initialized')
@@ -87,6 +87,21 @@ class CurveScreen(BaseExperimentScreen):
             self.marker_text_item.GraphicsItemFlag.ItemIgnoresTransformations
         )
         self.marker_text_item.setParentItem(self.marker_legend)
+        return
+
+    def _set_marker_text_item(self, condition: str):
+        '''Place the marker and resize it appropriately'''
+        def set_marker_text_item(font_size, pos_x, pos_y):
+            font = QFont()
+            font.setPixelSize(font_size)
+            self.marker_text_item.setFont(font)
+            self.marker_text_item.setPos(
+                self.width() * pos_x-font_size/2, self.height() * pos_y-font_size/2)
+
+        if condition == '+':
+            set_marker_text_item(100, 0.5, 0.5)
+        elif condition == 'others':
+            set_marker_text_item(40, 0.6, 0.75)
         return
 
     def draw(self):
@@ -135,10 +150,27 @@ class CurveScreen(BaseExperimentScreen):
             passed)
         self.marker_text_item.setText(mark)
 
-        # If mark is E, execute the blocks finished process
-        if mark == 'E':
+        # If mark is 'Block empty', execute the blocks finished process
+        if mark == 'Block empty':
+            self._set_marker_text_item('others')
             self.stop()
+            return
 
+        # Works for blocks in their starting seconds.
+        if mark in ['T', 'F', '+']:
+            block_start = self.bm.blocks[0]['start']
+            block_passed = passed - block_start
+            # Prevent the delay curve from displaying until rop.delayedLength is reached again.
+            if block_passed < rop.delayedLength:
+                self.passed_threshold_update_delay_curve = block_start + rop.delayedLength
+                self.delay_curve_dict = None
+                self.delayed_curve.setData([-1], [0])
+            # Crop the data
+            real_y = real_y[times > block_start]
+            fake_y = fake_y[times > block_start]
+            times = times[times > block_start]
+
+        # Choose to use real or fake pressure values
         if mark == 'F':
             self.feedback_curve.setData(times, self._limit(fake_y))
         else:
@@ -151,9 +183,18 @@ class CurveScreen(BaseExperimentScreen):
 
         # Set delayed data
         if len(delayed_data) > 0:
+            # Delayed data is delayed as its name.
+            # times: 10.0 sec -> d_times: 5.0 sec, (delayed length is 5.0 sec)
             real_d_y = delayed_data[:, 0]
             fake_d_y = delayed_data[:, 1]
             d_times = delayed_data[:, 4]
+
+            # Works for blocks in their starting seconds.
+            if mark in ['T', 'F', '+']:
+                # Crop the data
+                real_d_y = real_d_y[d_times+rop.delayedLength > block_start]
+                fake_d_y = fake_d_y[d_times+rop.delayedLength > block_start]
+                d_times = d_times[d_times+rop.delayedLength > block_start]
 
             # Only update the curve shape at the **next** rop.delayedLength arrives
             if passed > self.passed_threshold_update_delay_curve:
@@ -170,6 +211,9 @@ class CurveScreen(BaseExperimentScreen):
                         d_times+rop.delayedLength, self._limit(real_d_y))
                     self.delay_curve_dict = dict(
                         p=passed, x=d_times, y=self._limit(real_d_y))
+
+            # In case the delay_curve_dict is ready,
+            # move it temporarily to keep it in the center.
             elif self.delay_curve_dict is not None:
                 x = self.delay_curve_dict['x']
                 y = self.delay_curve_dict['y']
@@ -178,10 +222,15 @@ class CurveScreen(BaseExperimentScreen):
 
         # Update the visible for the curves
         if mark == '+':
+            # Put the + marker to the center
+            # Enlarge the + marker
+            self._set_marker_text_item('+')
             # Set the visible for the curves by force
             self.delayed_curve.setVisible(False)
             self.feedback_curve.setVisible(False)
         else:
+            # Restore the marker's position and size, since + marker changes them.
+            self._set_marker_text_item('others')
             # Set the visible for the curves according to options
             self.delayed_curve.setVisible(rop.flagDisplayDelayedCurve)
             self.feedback_curve.setVisible(rop.flagDisplayFeedbackCurve)
