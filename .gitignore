@@ -4,5 +4,6 @@ log
 *.spec
 build
 dist
+dist1
 *.iso
 Data
