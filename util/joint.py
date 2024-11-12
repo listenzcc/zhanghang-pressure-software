@@ -42,6 +42,7 @@ from .options import rop
 from . import logger
 
 mw = MainWindow()
+rop._mw = mw
 
 bsa = BuildingScoreAnimation()
 tssa_cct = TwoStepScore_Animation_CatClimbsTree()

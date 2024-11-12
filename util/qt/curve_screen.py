@@ -177,16 +177,20 @@ class CurveScreen(BaseExperimentScreen):
             self.feedback_curve.setData(times, self._limit(real_y))
 
         # Get delayed_data
+        # ! Using no-delayed data instead, the no-delayed data is only used in the curve screen.
         delayed_data = self.HID_reader.peek_by_seconds(
-            peek_length, peek_delay=True)
+            peek_length+rop.delayedLength, peek_delay=False)
         delayed_data = np.array(delayed_data)
+
+        delayed_data = delayed_data[delayed_data[:, 4]
+                                    < passed - rop.delayedLength]
 
         # Set delayed data
         if len(delayed_data) > 0:
             # Delayed data is delayed as its name.
             # times: 10.0 sec -> d_times: 5.0 sec, (delayed length is 5.0 sec)
             real_d_y = delayed_data[:, 0]
-            fake_d_y = delayed_data[:, 1]
+            fake_d_y = delayed_data[:, 2]
             d_times = delayed_data[:, 4]
 
             # Works for blocks in their starting seconds.

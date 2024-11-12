@@ -49,14 +49,14 @@
       <item>
        <widget class="QPushButton" name="zcc_pushButton_start">
         <property name="text">
-         <string>开始</string>
+         <string>开始（S）</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="zcc_pushButton_stop">
         <property name="text">
-         <string>结束</string>
+         <string>结束（S）</string>
         </property>
        </widget>
       </item>

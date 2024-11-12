@@ -121,10 +121,12 @@ class FakePressure(object):
 
     def load(self, data):
         if data is None:
-            data = [
-                (100, 45000, -1, -1, -1),
-                (200, 46000, -1, -1, -1),
-            ]
+            data = [(a, b, -1, -1, -1)
+                    for a, b in zip(range(100, 200), range(45000, 46000, 10))]
+            # data = [
+            #     (100, 45000, -1, -1, -1),
+            #     (200, 46000, -1, -1, -1),
+            # ]
             logger.warning(
                 'Load FakePressure with invalid data, using default instead.')
 

@@ -249,6 +249,10 @@ class BaseExperimentScreen(pg.PlotWidget):
         except Exception as e:
             logger.error(f"Error executing on_stop: {e}")
 
+        # Setup button's enable and disable status
+        rop._mw.children['zcc_pushButton_start'].setDisabled(False)
+        rop._mw.children['zcc_pushButton_stop'].setDisabled(True)
+
         logger.debug(f'Finished: {self.design}')
 
     def _correction_0g(self):

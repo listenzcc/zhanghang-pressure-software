@@ -38,6 +38,9 @@ class Singleton(type):
 
 
 class RunningOptions(object, metaclass=Singleton):
+    # Main window object
+    _mw = None
+
     # Basic info
     project_name = project_name
     version = software_version
